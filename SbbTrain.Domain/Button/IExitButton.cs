@@ -1,0 +1,1 @@
+public interface IExitButton: IButton, IEventReceiver {}

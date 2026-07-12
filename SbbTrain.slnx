@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="SbbTrain.Domain/SbbTrain.Domain.csproj" />
+  <Project Path="SbbTrain.Domain.Tests/SbbTrain.Domain.Tests.csproj" />
+</Solution>
