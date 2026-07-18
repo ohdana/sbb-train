@@ -1,4 +1,4 @@
-public interface ITimer : IDisposable
+public interface ITimer
 {
     void Reset();
     void Stop();

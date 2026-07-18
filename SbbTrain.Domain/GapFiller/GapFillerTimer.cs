@@ -1,4 +1,4 @@
-public class GapFillerTimer : ITimer
+public class GapFillerTimer : ITimer, IDisposable
 {
     private readonly TimeSpan _duration;
     private readonly ITimeoutable _client;

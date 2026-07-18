@@ -1,4 +1,4 @@
-public class TrainGapFiller : ITrainGapFiller
+public class TrainGapFiller : ITrainGapFiller, IDisposable
 {
     public Guid Id { get; }
     public GapFillerState State { get; private set; }
