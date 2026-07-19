@@ -7,15 +7,6 @@ public class DoorIndicatorStateMap
         { EventType.DoorIdle, DoorIndicatorState.Idle }
     };
 
-    public static DoorIndicatorState GetStateByEvent(EventType eventType)
-    {
-        if (!Map.ContainsKey(eventType))
-        {
-            throw new ArgumentOutOfRangeException(
-                nameof(eventType),
-                $"Unknown event type: {eventType}");
-        }
-        
-        return Map[eventType];
-    }
+    public static DoorIndicatorState GetStateByEvent(EventType eventType) 
+        => EventStateMap.GetStateByEvent(Map, eventType);
 }

@@ -9,15 +9,6 @@ public class ButtonStateMap
         { EventType.DoorDisabled, ButtonState.Disabled }
     };
 
-    public static ButtonState GetStateByEvent(EventType eventType)
-    {
-        if (!Map.ContainsKey(eventType))
-        {
-            throw new ArgumentOutOfRangeException(
-                nameof(eventType),
-                $"Unknown event type: {eventType}");
-        }
-        
-        return Map[eventType];
-    }
+    public static ButtonState GetStateByEvent(EventType eventType) 
+        => EventStateMap.GetStateByEvent(Map, eventType);
 }
