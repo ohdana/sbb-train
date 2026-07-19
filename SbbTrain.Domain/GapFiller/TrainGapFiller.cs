@@ -1,4 +1,4 @@
-public class TrainGapFiller : ITrainGapFiller, IDisposable
+public class TrainGapFiller : ITrainGapFiller
 {
     public Guid Id { get; }
     public GapFillerState State { get; private set; }
@@ -34,8 +34,6 @@ public class TrainGapFiller : ITrainGapFiller, IDisposable
     {
         HandleEventReceived(eventType);
     }
-
-    public void Dispose() => _timer.Dispose();
 
     private void HandleEventReceived(EventType eventType)
     {
