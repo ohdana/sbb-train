@@ -26,8 +26,7 @@ public class DoorIndicatorTests
     [Theory]
     [MemberData(nameof(EventStateMap))]
     public void DoorIndicator_WhenEventReceived_BecomesExpectedState(
-        EventType eventType, DoorIndicatorState expectedState
-    )
+        EventType eventType, DoorIndicatorState expectedState)
     {
         // Arrange
         // Act
@@ -40,8 +39,7 @@ public class DoorIndicatorTests
     [Theory]
     [MemberData(nameof(EventStateMap))]
     public void DoorIndicator_WhenEventReceived_NotifiesWithCorrectIdAndState(
-        EventType eventType, DoorIndicatorState expectedState
-    )
+        EventType eventType, DoorIndicatorState expectedState)
     {
         // Arrange
         // Act
