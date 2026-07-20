@@ -2,10 +2,10 @@ public class TrainGapFiller : ITrainGapFiller
 {
     public Guid Id { get; }
     public GapFillerState State { get; private set; }
-    private readonly ITimer _timer;
+    private readonly IGapFillerTimer _timer;
     private readonly IGapFillerEventHandler _handler;
 
-    public TrainGapFiller(Guid id, ITimer timer, IGapFillerEventHandler handler)
+    public TrainGapFiller(Guid id, IGapFillerTimer timer, IGapFillerEventHandler handler)
     {
         Id = id;
         State = GapFillerState.Retracted;

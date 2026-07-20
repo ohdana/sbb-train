@@ -1,0 +1,1 @@
+public interface IGapFillerTimer : ITimer, IDisposable {}
