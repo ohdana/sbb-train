@@ -1,6 +1,6 @@
 public enum ButtonState
 {
-    Idle,
+    Idle = 1,
     Active,
     Busy,
     Disabled

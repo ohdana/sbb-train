@@ -1,6 +1,6 @@
 public enum EventType
 {
-    ExitOpenRequested,
+    ExitOpenRequested = 1,
     DoorBusy,
     DoorIdle,
     DoorDisabled

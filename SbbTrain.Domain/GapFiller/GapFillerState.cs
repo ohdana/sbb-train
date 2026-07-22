@@ -1,5 +1,5 @@
 public enum GapFillerState
 {
-    Extended,
+    Extended = 1,
     Retracted
 }

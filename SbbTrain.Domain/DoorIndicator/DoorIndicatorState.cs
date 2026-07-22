@@ -1,5 +1,5 @@
 public enum DoorIndicatorState
 {
-    Idle,
+    Idle = 1,
     Busy
 }
