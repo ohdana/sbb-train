@@ -1,6 +1,6 @@
 public class TrainGapFiller : ITrainGapFiller
 {
-    private readonly IGapFillerTimer _timer;
+    private readonly IGapFillerTimer _autoRetractTimer;
     private readonly IGapFillerEventHandler _handler;
     
     public Guid Id { get; }
@@ -10,20 +10,20 @@ public class TrainGapFiller : ITrainGapFiller
     {
         Id = id;
         State = GapFillerState.Retracted;
-        _timer = timer;
+        _autoRetractTimer = timer;
         _handler = handler;
     }
 
     public void Extend()
     {
         SetState(GapFillerState.Extended);
-        _timer.Reset();
+        _autoRetractTimer.Reset();
     }
 
     public void Retract()
     {
         SetState(GapFillerState.Retracted);
-        _timer.Stop();
+        _autoRetractTimer.Stop();
     }
 
     public void TimeOut()
@@ -40,7 +40,7 @@ public class TrainGapFiller : ITrainGapFiller
     {
         if (eventType == EventType.ExitOpenRequested) 
         {
-            _timer.Reset();
+            _autoRetractTimer.Reset();
         }
     }
 

@@ -1,6 +1,6 @@
 public class TrainDoor : ITrainDoor
 {
-    private readonly IDoorTimer _timer;
+    private readonly IDoorTimer _autoCloseTimer;
     private readonly IDoorStateNotifier _notifier;
     private readonly IDoorEventHandler _handler;
     private readonly ITrainDoorMechanism _mechanism;
@@ -9,15 +9,15 @@ public class TrainDoor : ITrainDoor
     public Guid Id { get; }
     public DoorState State { get; private set; }
 
-    public TrainDoor(Guid id, 
-        IDoorTimer timer, 
+    public TrainDoor(Guid id,
+        IDoorTimer timer,
         ITrainDoorMechanism mechanism,
         IDoorEventHandler handler,
         IDoorStateNotifier notifier)
     {
         Id = id;
         State = DoorState.Closed;
-        _timer = timer;
+        _autoCloseTimer = timer;
         _mechanism = mechanism;
         _handler = handler;
         _notifier = notifier;
@@ -27,10 +27,18 @@ public class TrainDoor : ITrainDoor
     {
         SetState(DoorState.Opening);
         _notifier.NotifyDoorStateChanged(Id, State);
-        await _mechanism.OpenAsync();
-        SetState(DoorState.Opened);
-        _notifier.NotifyDoorStateChanged(Id, State);
-        _timer.Reset();
+        try
+        {
+            await _mechanism.OpenAsync();
+            SetState(DoorState.Opened);
+            _notifier.NotifyDoorStateChanged(Id, State);
+            _autoCloseTimer.Reset();
+        }
+        catch (OperationCanceledException)
+        {
+            // TODO
+            return;
+        }
     }
 
     public async Task CloseAsync()
@@ -43,17 +51,20 @@ public class TrainDoor : ITrainDoor
         try
         {
             await _mechanism.CloseAsync(_cts.Token);
-            DisposeCancellationTokenSource();
         }
         catch (OperationCanceledException)
         {
             await OpenAsync();
             return;
         }
+        finally
+        {
+            DisposeCancellationTokenSource();
+        }
 
         SetState(DoorState.Closed);
         _notifier.NotifyDoorStateChanged(Id, State);
-        _timer.Stop();
+        _autoCloseTimer.Stop();
     }
 
     public void TimeOut()
@@ -83,7 +94,7 @@ public class TrainDoor : ITrainDoor
 
     private void HandleEventReceived(EventType eventType)
     {
-        if (eventType == EventType.ObstructionDetected) 
+        if (eventType == EventType.ObstructionDetected)
         {
             HandleObstructionDetected();
         }
@@ -96,6 +107,6 @@ public class TrainDoor : ITrainDoor
             _cts?.Cancel();
         }
 
-        _timer.Reset();
+        _autoCloseTimer.Reset();
     }
 }
