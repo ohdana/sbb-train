@@ -1,10 +1,10 @@
-public class DoorTimer : IDoorTimer
+public class TimeoutTimer : ITimeoutTimer
 {
     private readonly TimeSpan _duration;
     private readonly ITimeoutable _client;
     private CancellationTokenSource? _cts;
 
-    public DoorTimer(TimeSpan duration, ITimeoutable client)
+    public TimeoutTimer(TimeSpan duration, ITimeoutable client)
     {
         _duration = duration;
         _client = client;

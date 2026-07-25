@@ -3,14 +3,14 @@ using NSubstitute;
 
 public class TrainGapFillerTests
 {
-    private readonly IGapFillerTimer _timer;
+    private readonly ITimeoutTimer _timer;
     private readonly IGapFillerEventHandler _handler;
     private readonly Guid _gapFillerId;
     private readonly TrainGapFiller _gapFiller;
 
     public TrainGapFillerTests()
     {
-        _timer = Substitute.For<IGapFillerTimer>();
+        _timer = Substitute.For<ITimeoutTimer>();
         _handler = Substitute.For<IGapFillerEventHandler>();
         _gapFillerId = Guid.NewGuid();
         _gapFiller = new TrainGapFiller(_gapFillerId, _timer, _handler);

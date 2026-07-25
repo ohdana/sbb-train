@@ -1,6 +1,6 @@
 public class TrainDoor : ITrainDoor
 {
-    private readonly IDoorTimer _autoCloseTimer;
+    private readonly ITimeoutTimer _autoCloseTimer;
     private readonly IDoorStateNotifier _notifier;
     private readonly IDoorEventHandler _handler;
     private readonly ITrainDoorMechanism _mechanism;
@@ -10,7 +10,7 @@ public class TrainDoor : ITrainDoor
     public DoorState State { get; private set; }
 
     public TrainDoor(Guid id,
-        IDoorTimer timer,
+        ITimeoutTimer timer,
         ITrainDoorMechanism mechanism,
         IDoorEventHandler handler,
         IDoorStateNotifier notifier)

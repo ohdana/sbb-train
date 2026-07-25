@@ -3,7 +3,7 @@ using NSubstitute;
 
 public class DoorTests
 {
-    private readonly IDoorTimer _timer;
+    private readonly ITimeoutTimer _timer;
     private readonly IDoorStateNotifier _notifier;
     private readonly ITrainDoorMechanism _mechanism;
     private readonly IDoorEventHandler _handler;
@@ -12,7 +12,7 @@ public class DoorTests
 
     public DoorTests()
     {
-        _timer = Substitute.For<IDoorTimer>();
+        _timer = Substitute.For<ITimeoutTimer>();
         _handler = Substitute.For<IDoorEventHandler>();
         _notifier = Substitute.For<IDoorStateNotifier>();
         _mechanism = Substitute.For<ITrainDoorMechanism>();
