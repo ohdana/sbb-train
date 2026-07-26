@@ -44,6 +44,9 @@ public class TrainDoorTests
     public async Task Door_WhenCloseCalled_StopsTimer()
     {
         // Arrange
+        await _door.OpenAsync();
+        _timer.ClearReceivedCalls();
+
         // Act
         await _door.CloseAsync();
 
@@ -92,6 +95,9 @@ public class TrainDoorTests
     public async Task Door_WhenOpenCalled_NotifiesOpeningThenOpened()
     {
         // Arrange
+        await _door.CloseAsync();
+        _notifier.ClearReceivedCalls();
+
         // Act
         await _door.OpenAsync();
 
@@ -107,6 +113,9 @@ public class TrainDoorTests
     public async Task Door_WhenCloseCalled_NotifiesClosingThenClosed()
     {
         // Arrange
+        await _door.OpenAsync();
+        _notifier.ClearReceivedCalls();
+
         // Act
         await _door.CloseAsync();
 
@@ -131,6 +140,8 @@ public class TrainDoorTests
                 token.Register(() => doorMechanismTcs.TrySetCanceled(token));
                 return doorMechanismTcs.Task;
             });
+        await _door.OpenAsync();
+        _notifier.ClearReceivedCalls();
 
         // Act
         var closeTask = _door.CloseAsync();
@@ -145,5 +156,44 @@ public class TrainDoorTests
             _notifier.NotifyDoorStateChanged(_doorId, DoorState.Opened);
         });
         Assert.Equal(DoorState.Opened, _door.State);
+    }
+
+    [Fact]
+    public async Task Door_WhenMechanismThrowsUnexpectedExceptionOnOpen_TransitionsToFaultedAndRethrows()
+    {
+        // Arrange
+        var mechanismException = new InvalidOperationException("Door jammed");
+        _mechanism
+            .OpenAsync()
+            .Returns<Task>(_ => throw mechanismException);
+
+        // Act
+        var thrown = await Record.ExceptionAsync(() => _door.OpenAsync());
+
+        // Assert
+        Assert.Same(mechanismException, thrown);
+        Assert.Equal(DoorState.Faulted, _door.State);
+        _notifier.Received(1).NotifyDoorStateChanged(_doorId, DoorState.Faulted);
+    }
+
+    [Fact]
+    public async Task Door_WhenMechanismThrowsUnexpectedExceptionOnClose_TransitionsToFaultedAndRethrows()
+    {
+        // Arrange
+        var mechanismException = new InvalidOperationException("Door jammed");
+        _mechanism
+            .CloseAsync(Arg.Any<CancellationToken>())
+            .Returns<Task>(_ => throw mechanismException);
+
+        await _door.OpenAsync();
+        _notifier.ClearReceivedCalls();
+
+        // Act
+        var thrown = await Record.ExceptionAsync(() => _door.CloseAsync());
+
+        // Assert
+        Assert.Same(mechanismException, thrown);
+        Assert.Equal(DoorState.Faulted, _door.State);
+        _notifier.Received(1).NotifyDoorStateChanged(_doorId, DoorState.Faulted);
     }
 }

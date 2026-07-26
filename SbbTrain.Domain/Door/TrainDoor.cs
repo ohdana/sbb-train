@@ -37,7 +37,7 @@ public class TrainDoor : ITrainDoor
             TransitionTo(DoorState.Opened);
             _autoCloseTimer.Reset();
         }
-        catch (OperationCanceledException)
+        catch (Exception)
         {
             TransitionTo(DoorState.Faulted);
             throw;

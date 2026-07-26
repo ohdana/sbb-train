@@ -1,4 +1,4 @@
 public interface IDoorEventHandler
 {
-    public void HandleTimeout(Guid doorId);
+    void HandleTimeout(Guid doorId);
 }
