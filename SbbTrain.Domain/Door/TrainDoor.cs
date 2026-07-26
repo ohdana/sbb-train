@@ -25,28 +25,34 @@ public class TrainDoor : ITrainDoor
 
     public async Task OpenAsync()
     {
-        SetState(DoorState.Opening);
-        _notifier.NotifyDoorStateChanged(Id, State);
+        if (State == DoorState.Opening || State == DoorState.Opened)
+        {
+            return;
+        }
+
+        TransitionTo(DoorState.Opening);
         try
         {
             await _mechanism.OpenAsync();
-            SetState(DoorState.Opened);
-            _notifier.NotifyDoorStateChanged(Id, State);
+            TransitionTo(DoorState.Opened);
             _autoCloseTimer.Reset();
         }
         catch (OperationCanceledException)
         {
-            // TODO
-            return;
+            TransitionTo(DoorState.Faulted);
+            throw;
         }
     }
 
     public async Task CloseAsync()
     {
-        _cts = new CancellationTokenSource();
+        if (State == DoorState.Closing || State == DoorState.Closed)
+        {
+            return;
+        }
 
-        SetState(DoorState.Closing);
-        _notifier.NotifyDoorStateChanged(Id, State);
+        _cts = new CancellationTokenSource();
+        TransitionTo(DoorState.Closing);
 
         try
         {
@@ -57,13 +63,17 @@ public class TrainDoor : ITrainDoor
             await OpenAsync();
             return;
         }
+        catch (Exception)
+        {
+            TransitionTo(DoorState.Faulted);
+            throw;
+        }
         finally
         {
             DisposeCancellationTokenSource();
         }
 
-        SetState(DoorState.Closed);
-        _notifier.NotifyDoorStateChanged(Id, State);
+        TransitionTo(DoorState.Closed);
         _autoCloseTimer.Stop();
     }
 
@@ -72,24 +82,15 @@ public class TrainDoor : ITrainDoor
         _handler.HandleTimeout(Id);
     }
 
-    public void OnEventReceived(EventType eventType)
-    {
-        HandleEventReceived(eventType);
-    }
-
     public void Dispose()
     {
         DisposeCancellationTokenSource();
+        _autoCloseTimer.Dispose();
     }
 
-    private void SetState(DoorState state) => State = state;
-
-    private void DisposeCancellationTokenSource()
+    public void OnEventReceived(EventType eventType)
     {
-        if (_cts == null) return;
-        _cts.Cancel();
-        _cts.Dispose();
-        _cts = null;
+        HandleEventReceived(eventType);
     }
 
     private void HandleEventReceived(EventType eventType)
@@ -109,4 +110,20 @@ public class TrainDoor : ITrainDoor
 
         _autoCloseTimer.Reset();
     }
+
+    private void DisposeCancellationTokenSource()
+    {
+        if (_cts == null) return;
+        _cts.Cancel();
+        _cts.Dispose();
+        _cts = null;
+    }
+
+    private void TransitionTo(DoorState state)
+    {
+        SetState(state);
+        _notifier.NotifyDoorStateChanged(Id, State);
+    }
+
+    private void SetState(DoorState state) => State = state;
 }
