@@ -39,7 +39,7 @@ public class TrainDoor : ITrainDoor
         }
         catch (Exception)
         {
-            TransitionTo(DoorState.Faulted);
+            HandleDoorMechanismException();
             throw;
         }
     }
@@ -51,7 +51,7 @@ public class TrainDoor : ITrainDoor
             return;
         }
 
-        _cts = new CancellationTokenSource();
+        RefreshCancellationTokenSource();
         TransitionTo(DoorState.Closing);
 
         try
@@ -65,7 +65,7 @@ public class TrainDoor : ITrainDoor
         }
         catch (Exception)
         {
-            TransitionTo(DoorState.Faulted);
+            HandleDoorMechanismException();
             throw;
         }
         finally
@@ -105,18 +105,21 @@ public class TrainDoor : ITrainDoor
     {
         if (State == DoorState.Closing)
         {
-            _cts?.Cancel();
+            StopDoorMechanism();
         }
 
         _autoCloseTimer.Reset();
     }
 
-    private void DisposeCancellationTokenSource()
+    private void StopDoorMechanism()
     {
-        if (_cts == null) return;
-        _cts.Cancel();
-        _cts.Dispose();
-        _cts = null;
+        _cts?.Cancel();
+    }
+
+    private void HandleDoorMechanismException()
+    {
+        TransitionTo(DoorState.Faulted);
+        _autoCloseTimer.Stop();
     }
 
     private void TransitionTo(DoorState state)
@@ -126,4 +129,17 @@ public class TrainDoor : ITrainDoor
     }
 
     private void SetState(DoorState state) => State = state;
+
+    private void RefreshCancellationTokenSource()
+    {
+        _cts = new CancellationTokenSource();
+    }
+
+    private void DisposeCancellationTokenSource()
+    {
+        if (_cts == null) return;
+        _cts.Cancel();
+        _cts.Dispose();
+        _cts = null;
+    }
 }
