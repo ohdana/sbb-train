@@ -1,7 +1,7 @@
 using Xunit;
 using NSubstitute;
 
-public class DoorTests
+public class TrainDoorTests
 {
     private readonly ITimeoutTimer _timer;
     private readonly IDoorStateNotifier _notifier;
@@ -10,7 +10,7 @@ public class DoorTests
     private readonly Guid _doorId;
     private readonly TrainDoor _door;
 
-    public DoorTests()
+    public TrainDoorTests()
     {
         _timer = Substitute.For<ITimeoutTimer>();
         _handler = Substitute.For<IDoorEventHandler>();
