@@ -56,7 +56,7 @@ public class TrainDoor : ITrainDoor
 
         try
         {
-            await _mechanism.CloseAsync(_cts.Token);
+            await _mechanism.CloseAsync(_cts!.Token);
         }
         catch (OperationCanceledException)
         {
