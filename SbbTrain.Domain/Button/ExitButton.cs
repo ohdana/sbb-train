@@ -1,4 +1,4 @@
-public class ExitButton: IExitButton
+public class ExitButton : IExitButton
 {
     private readonly IButtonEventHandler _handler;
     private readonly IButtonStateNotifier _notifier;
