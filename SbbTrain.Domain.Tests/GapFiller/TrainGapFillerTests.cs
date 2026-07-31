@@ -4,6 +4,8 @@ using NSubstitute;
 public class TrainGapFillerTests
 {
     private readonly ITimeoutTimer _timer;
+    private readonly IGapFillerStateNotifier _notifier;
+    private readonly IGapFillerMechanism _mechanism;
     private readonly IGapFillerEventHandler _handler;
     private readonly Guid _gapFillerId;
     private readonly TrainGapFiller _gapFiller;
@@ -11,9 +13,11 @@ public class TrainGapFillerTests
     public TrainGapFillerTests()
     {
         _timer = Substitute.For<ITimeoutTimer>();
+        _notifier = Substitute.For<IGapFillerStateNotifier>();
+        _mechanism = Substitute.For<IGapFillerMechanism>();
         _handler = Substitute.For<IGapFillerEventHandler>();
         _gapFillerId = Guid.NewGuid();
-        _gapFiller = new TrainGapFiller(_gapFillerId, _timer, _handler);
+        _gapFiller = new TrainGapFiller(_gapFillerId, _timer, _notifier, _mechanism, _handler);
     }
 
     [Fact]
@@ -26,50 +30,51 @@ public class TrainGapFillerTests
     }
 
     [Fact]
-    public void GapFiller_WhenRetractCalled_IsRetracted()
+    public async Task GapFiller_WhenRetractCalled_BecomesRetracted()
     {
         // Arrange
-        _gapFiller.Extend();
+        await _gapFiller.ExtendAsync();
 
         // Act
-        _gapFiller.Retract();
+        await _gapFiller.RetractAsync();
 
         // Assert
         Assert.Equal(GapFillerState.Retracted, _gapFiller.State);
     }
 
     [Fact]
-    public void GapFiller_WhenExtendCalled_IsExtended()
+    public async Task GapFiller_WhenExtendCalled_BecomesExtended()
     {
         // Arrange
-        _gapFiller.Retract();
+        await _gapFiller.RetractAsync();
 
         // Act
-        _gapFiller.Extend();
+        await _gapFiller.ExtendAsync();
 
         // Assert
         Assert.Equal(GapFillerState.Extended, _gapFiller.State);
     }
 
     [Fact]
-    public void GapFiller_WhenExtendCalled_ResetsTimer()
+    public async Task GapFiller_WhenExtendCalled_ResetsTimer()
     {
         // Arrange
         // Act
-        _gapFiller.Extend();
+        await _gapFiller.ExtendAsync();
 
         // Assert
         _timer.Received(1).Reset();
     }
 
     [Fact]
-    public void GapFiller_WhenRetractCalled_StopsTimer()
+    public async Task GapFiller_WhenRetractCalled_StopsTimer()
     {
         // Arrange
-        _gapFiller.Extend();
+        await _gapFiller.ExtendAsync();
+        _timer.ClearReceivedCalls();
 
         // Act
-        _gapFiller.Retract();
+        await _gapFiller.RetractAsync();
 
         // Assert
         _timer.Received(1).Stop();
@@ -95,5 +100,47 @@ public class TrainGapFillerTests
 
         // Assert
         _timer.Received(1).Reset();
+    }
+
+    [Fact]
+    public async Task GapFiller_WhenMechanismThrowsUnexpectedExceptionOnExtend_TransitionsToFaultedAndRethrows()
+    {
+        // Arrange
+        var mechanismException = new InvalidOperationException("Gap filler jammed");
+        _mechanism
+            .ExtendAsync()
+            .Returns<Task>(_ => throw mechanismException);
+
+        await _gapFiller.RetractAsync();
+        _notifier.ClearReceivedCalls();
+
+        // Act
+        var thrown = await Record.ExceptionAsync(() => _gapFiller.ExtendAsync());
+
+        // Assert
+        Assert.Same(mechanismException, thrown);
+        Assert.Equal(GapFillerState.Faulted, _gapFiller.State);
+        _notifier.Received(1).NotifyGapFillerStateChanged(_gapFillerId, GapFillerState.Faulted);
+    }
+
+    [Fact]
+    public async Task GapFiller_WhenMechanismThrowsUnexpectedExceptionOnRetract_TransitionsToFaultedAndRethrows()
+    {
+        // Arrange
+        var mechanismException = new InvalidOperationException("Gap filler jammed");
+        _mechanism
+            .RetractAsync()
+            .Returns<Task>(_ => throw mechanismException);
+
+        await _gapFiller.ExtendAsync();
+        _notifier.ClearReceivedCalls();
+
+        // Act
+        var thrown = await Record.ExceptionAsync(() => _gapFiller.RetractAsync());
+
+        // Assert
+        Assert.Same(mechanismException, thrown);
+        Assert.Equal(GapFillerState.Faulted, _gapFiller.State);
+        _notifier.Received(1).NotifyGapFillerStateChanged(_gapFillerId, GapFillerState.Faulted);
     }
 }

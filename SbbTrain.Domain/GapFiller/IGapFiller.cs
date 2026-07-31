@@ -2,6 +2,6 @@ public interface IGapFiller
 {
     Guid Id { get; }
     GapFillerState State { get; }
-    void Extend();
-    void Retract();
+    Task ExtendAsync();
+    Task RetractAsync();
 }
