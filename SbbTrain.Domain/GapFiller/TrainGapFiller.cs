@@ -1,25 +1,25 @@
 public class TrainGapFiller : ITrainGapFiller
 {
     private readonly ITimeoutTimer _autoRetractTimer;
-    private readonly IGapFillerStateNotifier _notifier;
-    private readonly IGapFillerMechanism _mechanism;
     private readonly IGapFillerEventHandler _handler;
+    private readonly IGapFillerMechanism _mechanism;
+    private readonly IGapFillerStateNotifier _notifier;
     
     public Guid Id { get; }
     public GapFillerState State { get; private set; }
 
     public TrainGapFiller(Guid id, 
-        ITimeoutTimer timer, 
-        IGapFillerStateNotifier notifier,
+        ITimeoutTimer autoRetractTimer,
+        IGapFillerEventHandler handler,
         IGapFillerMechanism mechanism,
-        IGapFillerEventHandler handler)
+        IGapFillerStateNotifier notifier)
     {
         Id = id;
         State = GapFillerState.Retracted;
-        _autoRetractTimer = timer;
-        _notifier = notifier;
-        _mechanism = mechanism;
+        _autoRetractTimer = autoRetractTimer;
         _handler = handler;
+        _mechanism = mechanism;
+        _notifier = notifier;
     }
 
     public async Task ExtendAsync()

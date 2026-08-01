@@ -1,25 +1,25 @@
 public class ExitDoor : IExitDoor
 {
     private readonly ITimeoutTimer _autoCloseTimer;
-    private readonly IDoorStateNotifier _notifier;
     private readonly IDoorEventHandler _handler;
     private readonly IExitDoorMechanism _mechanism;
+    private readonly IDoorStateNotifier _notifier;
     private CancellationTokenSource? _cts;
 
     public Guid Id { get; }
     public DoorState State { get; private set; }
 
     public ExitDoor(Guid id,
-        ITimeoutTimer timer,
-        IExitDoorMechanism mechanism,
+        ITimeoutTimer autoCloseTimer,
         IDoorEventHandler handler,
+        IExitDoorMechanism mechanism,
         IDoorStateNotifier notifier)
     {
         Id = id;
         State = DoorState.Closed;
-        _autoCloseTimer = timer;
-        _mechanism = mechanism;
+        _autoCloseTimer = autoCloseTimer;
         _handler = handler;
+        _mechanism = mechanism;
         _notifier = notifier;
     }
 

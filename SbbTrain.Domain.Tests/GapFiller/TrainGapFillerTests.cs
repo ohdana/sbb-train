@@ -3,21 +3,21 @@ using NSubstitute;
 
 public class TrainGapFillerTests
 {
-    private readonly ITimeoutTimer _timer;
-    private readonly IGapFillerStateNotifier _notifier;
-    private readonly IGapFillerMechanism _mechanism;
+    private readonly ITimeoutTimer _autoCloseTimer;
     private readonly IGapFillerEventHandler _handler;
+    private readonly IGapFillerMechanism _mechanism;
+    private readonly IGapFillerStateNotifier _notifier;
     private readonly Guid _gapFillerId;
     private readonly TrainGapFiller _gapFiller;
 
     public TrainGapFillerTests()
     {
-        _timer = Substitute.For<ITimeoutTimer>();
-        _notifier = Substitute.For<IGapFillerStateNotifier>();
-        _mechanism = Substitute.For<IGapFillerMechanism>();
+        _autoCloseTimer = Substitute.For<ITimeoutTimer>();
         _handler = Substitute.For<IGapFillerEventHandler>();
+        _mechanism = Substitute.For<IGapFillerMechanism>();
+        _notifier = Substitute.For<IGapFillerStateNotifier>();
         _gapFillerId = Guid.NewGuid();
-        _gapFiller = new TrainGapFiller(_gapFillerId, _timer, _notifier, _mechanism, _handler);
+        _gapFiller = new TrainGapFiller(_gapFillerId, _autoCloseTimer, _handler, _mechanism, _notifier);
     }
 
     [Fact]
@@ -63,7 +63,7 @@ public class TrainGapFillerTests
         await _gapFiller.ExtendAsync();
 
         // Assert
-        _timer.Received(1).Reset();
+        _autoCloseTimer.Received(1).Reset();
     }
 
     [Fact]
@@ -71,13 +71,13 @@ public class TrainGapFillerTests
     {
         // Arrange
         await _gapFiller.ExtendAsync();
-        _timer.ClearReceivedCalls();
+        _autoCloseTimer.ClearReceivedCalls();
 
         // Act
         await _gapFiller.RetractAsync();
 
         // Assert
-        _timer.Received(1).Stop();
+        _autoCloseTimer.Received(1).Stop();
     }
 
     [Fact]
@@ -99,7 +99,7 @@ public class TrainGapFillerTests
         _gapFiller.OnEventReceived(EventType.ExitOpenRequested);
 
         // Assert
-        _timer.Received(1).Reset();
+        _autoCloseTimer.Received(1).Reset();
     }
 
     [Fact]

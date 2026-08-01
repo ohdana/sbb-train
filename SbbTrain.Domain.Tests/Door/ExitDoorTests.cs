@@ -3,21 +3,21 @@ using NSubstitute;
 
 public class ExitDoorTests
 {
-    private readonly ITimeoutTimer _timer;
-    private readonly IDoorStateNotifier _notifier;
-    private readonly IExitDoorMechanism _mechanism;
+    private readonly ITimeoutTimer _autoCloseTimer;
     private readonly IDoorEventHandler _handler;
+    private readonly IExitDoorMechanism _mechanism;
+    private readonly IDoorStateNotifier _notifier;
     private readonly Guid _doorId;
     private readonly ExitDoor _door;
 
     public ExitDoorTests()
     {
-        _timer = Substitute.For<ITimeoutTimer>();
+        _autoCloseTimer = Substitute.For<ITimeoutTimer>();
         _handler = Substitute.For<IDoorEventHandler>();
         _notifier = Substitute.For<IDoorStateNotifier>();
         _mechanism = Substitute.For<IExitDoorMechanism>();
         _doorId = Guid.NewGuid();
-        _door = new ExitDoor(_doorId, _timer, _mechanism, _handler, _notifier);
+        _door = new ExitDoor(_doorId, _autoCloseTimer, _handler, _mechanism, _notifier);
     }
 
     [Fact]
@@ -37,7 +37,7 @@ public class ExitDoorTests
         await _door.OpenAsync();
 
         // Assert
-        _timer.Received(1).Reset();
+        _autoCloseTimer.Received(1).Reset();
     }
 
     [Fact]
@@ -45,13 +45,13 @@ public class ExitDoorTests
     {
         // Arrange
         await _door.OpenAsync();
-        _timer.ClearReceivedCalls();
+        _autoCloseTimer.ClearReceivedCalls();
 
         // Act
         await _door.CloseAsync();
 
         // Assert
-        _timer.Received(1).Stop();
+        _autoCloseTimer.Received(1).Stop();
     }
 
     [Fact]
