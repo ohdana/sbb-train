@@ -1,23 +1,23 @@
 using Xunit;
 using NSubstitute;
 
-public class TrainDoorTests
+public class ExitDoorTests
 {
     private readonly ITimeoutTimer _timer;
     private readonly IDoorStateNotifier _notifier;
-    private readonly ITrainDoorMechanism _mechanism;
+    private readonly IExitDoorMechanism _mechanism;
     private readonly IDoorEventHandler _handler;
     private readonly Guid _doorId;
-    private readonly TrainDoor _door;
+    private readonly ExitDoor _door;
 
-    public TrainDoorTests()
+    public ExitDoorTests()
     {
         _timer = Substitute.For<ITimeoutTimer>();
         _handler = Substitute.For<IDoorEventHandler>();
         _notifier = Substitute.For<IDoorStateNotifier>();
-        _mechanism = Substitute.For<ITrainDoorMechanism>();
+        _mechanism = Substitute.For<IExitDoorMechanism>();
         _doorId = Guid.NewGuid();
-        _door = new TrainDoor(_doorId, _timer, _mechanism, _handler, _notifier);
+        _door = new ExitDoor(_doorId, _timer, _mechanism, _handler, _notifier);
     }
 
     [Fact]

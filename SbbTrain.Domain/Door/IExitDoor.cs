@@ -1,4 +1,4 @@
-public interface ITrainDoor :
+public interface IExitDoor :
     IDoor,
     IEventReceiver,
     ITimeoutable,

@@ -1,17 +1,17 @@
-public class TrainDoor : ITrainDoor
+public class ExitDoor : IExitDoor
 {
     private readonly ITimeoutTimer _autoCloseTimer;
     private readonly IDoorStateNotifier _notifier;
     private readonly IDoorEventHandler _handler;
-    private readonly ITrainDoorMechanism _mechanism;
+    private readonly IExitDoorMechanism _mechanism;
     private CancellationTokenSource? _cts;
 
     public Guid Id { get; }
     public DoorState State { get; private set; }
 
-    public TrainDoor(Guid id,
+    public ExitDoor(Guid id,
         ITimeoutTimer timer,
-        ITrainDoorMechanism mechanism,
+        IExitDoorMechanism mechanism,
         IDoorEventHandler handler,
         IDoorStateNotifier notifier)
     {
