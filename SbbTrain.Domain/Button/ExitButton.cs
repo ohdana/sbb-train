@@ -1,10 +1,10 @@
 public class ExitButton : IExitButton
 {
-    private readonly IButtonEventHandler _handler;
-    private readonly IButtonStateNotifier _notifier;
-
     public Guid Id { get; }
     public ButtonState State { get; private set; }
+
+    private readonly IButtonEventHandler _handler;
+    private readonly IButtonStateNotifier _notifier;
     
     public ExitButton(Guid id, 
         IButtonEventHandler handler,

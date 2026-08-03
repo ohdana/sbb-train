@@ -1,13 +1,13 @@
 public class ExitDoor : IExitDoor
 {
+    public Guid Id { get; }
+    public DoorState State { get; private set; }
+
     private readonly ITimeoutTimer _autoCloseTimer;
     private readonly IDoorEventHandler _handler;
     private readonly IExitDoorMechanism _mechanism;
     private readonly IDoorStateNotifier _notifier;
     private CancellationTokenSource? _cts;
-
-    public Guid Id { get; }
-    public DoorState State { get; private set; }
 
     public ExitDoor(Guid id,
         ITimeoutTimer autoCloseTimer,

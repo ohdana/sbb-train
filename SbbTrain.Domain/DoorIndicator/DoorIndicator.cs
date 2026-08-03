@@ -2,6 +2,7 @@ public class DoorIndicator : IDoorIndicator
 {
     public Guid Id { get; }
     public DoorIndicatorState State { get; private set; }
+    
     public IDoorIndicatorStateNotifier _notifier;
 
     public DoorIndicator(Guid id, IDoorIndicatorStateNotifier notifier)
