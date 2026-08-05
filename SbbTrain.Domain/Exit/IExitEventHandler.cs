@@ -1,4 +1,4 @@
 public interface IExitEventHandler
 {
-    void HandleExitOpenPending();
+    void HandlePendingOpenRequest();
 }

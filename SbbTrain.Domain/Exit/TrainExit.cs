@@ -3,17 +3,20 @@ public class TrainExit : ITrainExit
     public Guid Id { get; }
     public TrainExitState State { get; private set; }
 
-    private readonly ITrainExitStateNotifier _notifier;
+    private readonly ITrainExitNotifier _notifier;
     private readonly ITrainExitSide _sideA;
     private readonly ITrainExitSide _sideB;
     private ITrainExitSide? _safeSide;
-    private bool _isOpenPending;
+    private bool _hasPendingOpenRequest;
 
-    public TrainExit(Guid id, ITrainExitSide sideA, ITrainExitSide sideB, ITrainExitStateNotifier notifier)
+    public TrainExit(Guid id, 
+        ITrainExitSide sideA, 
+        ITrainExitSide sideB, 
+        ITrainExitNotifier notifier)
     {
         Id = id;
         State = TrainExitState.Disabled;
-        _isOpenPending = false;
+        _hasPendingOpenRequest = false;
         _sideA = sideA;
         _sideB = sideB;
         _notifier = notifier;
@@ -23,7 +26,7 @@ public class TrainExit : ITrainExit
     {
         SetSafeSide(sideType);
         SetState(TrainExitState.Enabled);
-        _ = TryResolvePendingOpenRequest();
+        TriggerPendingOpenRequest();
     }
 
     public void Disable()
@@ -35,7 +38,11 @@ public class TrainExit : ITrainExit
     public async Task RequestOpenAsync()
     {
         CreatePendingOpenRequest();
-        await TryResolvePendingOpenRequest();
+
+        if (State == TrainExitState.Enabled)
+        {
+            await ResolvePendingOpenRequest();
+        }
     }
 
     public async Task CloseAsync()
@@ -54,22 +61,6 @@ public class TrainExit : ITrainExit
             HandleTrainExitSideException();
             throw;
         }
-    }
-
-    private async Task TryResolvePendingOpenRequest()
-    {
-        if (!_isOpenPending)
-        {
-            return;
-        }
-
-        if (State != TrainExitState.Enabled)
-        {
-            return;
-        }
-
-        await OpenAsync();
-        ClearPendingOpenRequest();
     }
 
     private async Task OpenAsync()
@@ -96,6 +87,27 @@ public class TrainExit : ITrainExit
         SetState(TrainExitState.Faulted);
         _notifier.NotifyTrainExitStateChanged(Id, State);
     }
+    
+    private void CreatePendingOpenRequest()
+    {
+        SetHasPendingOpenRequest(true);
+        _notifier.NotifyTrainExitOpenRequested(Id);
+        _sideA.HandlePendingOpenRequest();
+        _sideB.HandlePendingOpenRequest();
+    }
+
+    private async Task ResolvePendingOpenRequest()
+    {
+        if (!_hasPendingOpenRequest)
+        {
+            return;
+        }
+        
+        await OpenAsync();
+        SetHasPendingOpenRequest(false);
+    }
+
+    private void TriggerPendingOpenRequest() => _ = ResolvePendingOpenRequest();
 
     private void SetNoSafeSide()
     {
@@ -111,17 +123,8 @@ public class TrainExit : ITrainExit
             _ => throw new ArgumentOutOfRangeException(nameof(sideType), $"Unknown side type: {sideType}")
         };
     }
-
-    private void CreatePendingOpenRequest()
-    {
-        SetIsOpenPending(true);
-        _sideA.HandleExitOpenPending();
-        _sideB.HandleExitOpenPending();
-    }
-
-    private void ClearPendingOpenRequest() => SetIsOpenPending(false);
-
-    private void SetIsOpenPending(bool isOpenPending) => _isOpenPending = isOpenPending;
-
     private void SetState(TrainExitState state) => State = state;
+    
+    private void SetHasPendingOpenRequest(bool hasPendingOpenRequest) 
+        => _hasPendingOpenRequest = hasPendingOpenRequest;
 }
