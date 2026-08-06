@@ -71,14 +71,14 @@ public class TrainExitTests
 
     [Theory]
     [MemberData(nameof(TrainSideTypes))]
-    public async Task TrainExit_WhenEnabledAndRequestOpenCalled_OpensSafeSide(TrainSideType sideType)
+    public async Task TrainExit_WhenEnabledAndOpenCalled_OpensSafeSide(TrainSideType sideType)
     {
         // Arrange
         var (safeSide, anotherSide) = GetSides(sideType);
         _exit.Enable(sideType);
 
         // Act
-        await _exit.RequestOpenAsync();
+        await _exit.OpenAsync();
 
         // Assert
         await safeSide.Received(1).OpenAsync();
@@ -90,7 +90,7 @@ public class TrainExitTests
     {
         // Arrange
         // Act
-        await _exit.RequestOpenAsync();
+        await _exit.OpenAsync();
 
         // Assert
         await _sideA.DidNotReceive().OpenAsync();
@@ -104,7 +104,7 @@ public class TrainExitTests
         // Arrange
         var (safeSide, anotherSide) = GetSides(sideType);
         _exit.Enable(sideType);
-        await _exit.RequestOpenAsync();
+        await _exit.OpenAsync();
         safeSide.ClearReceivedCalls();
 
         // Act
@@ -129,7 +129,7 @@ public class TrainExitTests
         _notifier.ClearReceivedCalls();
 
         // Act
-        var thrown = await Record.ExceptionAsync(() => _exit.RequestOpenAsync());
+        var thrown = await Record.ExceptionAsync(() => _exit.OpenAsync());
 
         // Assert
         Assert.Same(sideException, thrown);
@@ -148,7 +148,7 @@ public class TrainExitTests
         safeSide.CloseAsync().Returns<Task>(_ => throw sideException);
 
         _exit.Enable(sideType);
-        await _exit.RequestOpenAsync();
+        await _exit.OpenAsync();
         _notifier.ClearReceivedCalls();
 
         // Act
