@@ -3,6 +3,8 @@ public class ExitDoor : IExitDoor
     public Guid Id { get; }
     public DoorState State { get; private set; }
 
+    public event Action? StateChanged;
+
     private readonly ITimeoutTimer _autoCloseTimer;
     private readonly IDoorEventHandler _handler;
     private readonly IExitDoorMechanism _mechanism;
@@ -128,7 +130,11 @@ public class ExitDoor : IExitDoor
         _notifier.NotifyDoorStateChanged(Id, State);
     }
 
-    private void SetState(DoorState state) => State = state;
+    private void SetState(DoorState state)
+    {
+        State = state;
+        RaiseStateChanged();
+    }
 
     private void RefreshCancellationTokenSource()
     {
@@ -142,4 +148,6 @@ public class ExitDoor : IExitDoor
         _cts.Dispose();
         _cts = null;
     }
+
+    private void RaiseStateChanged() => StateChanged?.Invoke();
 }

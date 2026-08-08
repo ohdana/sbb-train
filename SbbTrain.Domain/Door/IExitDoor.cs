@@ -3,4 +3,6 @@ public interface IExitDoor :
     IEventReceiver,
     ITimeoutable,
     IDisposable
-{ }
+{
+    event Action? StateChanged;
+}
