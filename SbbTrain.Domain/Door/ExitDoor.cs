@@ -4,9 +4,9 @@ public class ExitDoor : IExitDoor
     public DoorState State { get; private set; }
 
     public event Action? StateChanged;
+    public event Action? TimedOut;
 
     private readonly ITimeoutTimer _autoCloseTimer;
-    private readonly IDoorEventHandler _handler;
     private readonly IExitDoorMechanism _mechanism;
     private readonly IDoorStateNotifier _notifier;
     private CancellationTokenSource? _cts;
@@ -14,14 +14,12 @@ public class ExitDoor : IExitDoor
     public ExitDoor(Guid id,
         ITimeoutTimerFactory timerFactory,
         TimeSpan autoCloseTimerDuration,
-        IDoorEventHandler handler,
         IExitDoorMechanism mechanism,
         IDoorStateNotifier notifier)
     {
         Id = id;
         State = DoorState.Closed;
         _autoCloseTimer = timerFactory.Create(autoCloseTimerDuration, this);
-        _handler = handler;
         _mechanism = mechanism;
         _notifier = notifier;
     }
@@ -82,7 +80,7 @@ public class ExitDoor : IExitDoor
 
     public void TimeOut()
     {
-        _handler.HandleTimeout(Id);
+        RaiseTimedOut();
     }
 
     public void Dispose()
@@ -151,4 +149,5 @@ public class ExitDoor : IExitDoor
     }
 
     private void RaiseStateChanged() => StateChanged?.Invoke();
+    private void RaiseTimedOut() => TimedOut?.Invoke();
 }

@@ -4,7 +4,6 @@ using NSubstitute;
 public class TrainGapFillerTests
 {
     private readonly ITimeoutTimer _autoRetractTimer;
-    private readonly IGapFillerEventHandler _handler;
     private readonly IGapFillerMechanism _mechanism;
     private readonly IGapFillerStateNotifier _notifier;
     private readonly Guid _gapFillerId;
@@ -13,7 +12,6 @@ public class TrainGapFillerTests
     public TrainGapFillerTests()
     {
         _autoRetractTimer = Substitute.For<ITimeoutTimer>();
-        _handler = Substitute.For<IGapFillerEventHandler>();
         _mechanism = Substitute.For<IGapFillerMechanism>();
         _notifier = Substitute.For<IGapFillerStateNotifier>();
         _gapFillerId = Guid.NewGuid();
@@ -23,7 +21,7 @@ public class TrainGapFillerTests
         timerFactory.Create(Arg.Any<TimeSpan>(), Arg.Any<ITimeoutable>())
                     .Returns(_autoRetractTimer);
 
-        _gapFiller = new TrainGapFiller(_gapFillerId, timerFactory, timerDuration, _handler, _mechanism, _notifier);
+        _gapFiller = new TrainGapFiller(_gapFillerId, timerFactory, timerDuration, _mechanism, _notifier);
     }
 
     [Fact]
@@ -87,14 +85,17 @@ public class TrainGapFillerTests
     }
 
     [Fact]
-    public void GapFiller_WhenTimeoutOccurs_CallsHandler()
+    public void GapFiller_WhenTimeoutOccurs_RaisesTimedOut()
     {
         // Arrange
+        var raised = false;
+        _gapFiller.TimedOut += () => raised = true;
+
         // Act
         _gapFiller.TimeOut();
 
         // Assert
-        _handler.Received(1).HandleTimeout(_gapFillerId);
+        Assert.True(raised);
     }
 
     [Fact]

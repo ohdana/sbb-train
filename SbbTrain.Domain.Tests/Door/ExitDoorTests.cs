@@ -4,7 +4,6 @@ using NSubstitute;
 public class ExitDoorTests
 {
     private readonly ITimeoutTimer _autoCloseTimer;
-    private readonly IDoorEventHandler _handler;
     private readonly IExitDoorMechanism _mechanism;
     private readonly IDoorStateNotifier _notifier;
     private readonly Guid _doorId;
@@ -13,7 +12,6 @@ public class ExitDoorTests
     public ExitDoorTests()
     {
         _autoCloseTimer = Substitute.For<ITimeoutTimer>();
-        _handler = Substitute.For<IDoorEventHandler>();
         _notifier = Substitute.For<IDoorStateNotifier>();
         _mechanism = Substitute.For<IExitDoorMechanism>();
         _doorId = Guid.NewGuid();
@@ -23,7 +21,7 @@ public class ExitDoorTests
         timerFactory.Create(Arg.Any<TimeSpan>(), Arg.Any<ITimeoutable>())
                     .Returns(_autoCloseTimer);
 
-        _door = new ExitDoor(_doorId, timerFactory, timerDuration, _handler, _mechanism, _notifier);
+        _door = new ExitDoor(_doorId, timerFactory, timerDuration, _mechanism, _notifier);
     }
 
     [Fact]
@@ -61,14 +59,17 @@ public class ExitDoorTests
     }
 
     [Fact]
-    public void Door_WhenTimeoutOccurs_CallsHandler()
+    public void Door_WhenTimeoutOccurs_RaisesTimedOut()
     {
         // Arrange
+        var raised = false;
+        _door.TimedOut += () => raised = true;
+
         // Act
         _door.TimeOut();
 
         // Assert
-        _handler.Received(1).HandleTimeout(_doorId);
+        Assert.True(raised);
     }
 
     [Fact]

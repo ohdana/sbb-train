@@ -3,22 +3,21 @@ public class TrainGapFiller : ITrainGapFiller
     public Guid Id { get; }
     public GapFillerState State { get; private set; }
 
+    public event Action? TimedOut;
+
     private readonly ITimeoutTimer _autoRetractTimer;
-    private readonly IGapFillerEventHandler _handler;
     private readonly IGapFillerMechanism _mechanism;
     private readonly IGapFillerStateNotifier _notifier;
 
     public TrainGapFiller(Guid id, 
         ITimeoutTimerFactory timerFactory,
         TimeSpan autoRetractTimerDuration,
-        IGapFillerEventHandler handler,
         IGapFillerMechanism mechanism,
         IGapFillerStateNotifier notifier)
     {
         Id = id;
         State = GapFillerState.Retracted;
         _autoRetractTimer = timerFactory.Create(autoRetractTimerDuration, this);
-        _handler = handler;
         _mechanism = mechanism;
         _notifier = notifier;
     }
@@ -65,7 +64,7 @@ public class TrainGapFiller : ITrainGapFiller
 
     public void TimeOut()
     {
-        _handler.HandleTimeout(Id);
+        RaiseTimedOut();
     }
 
     public void OnEventReceived(EventType eventType)
@@ -89,4 +88,5 @@ public class TrainGapFiller : ITrainGapFiller
     }
 
     private void SetState(GapFillerState state) => State = state;
+    private void RaiseTimedOut() => TimedOut?.Invoke();
 }

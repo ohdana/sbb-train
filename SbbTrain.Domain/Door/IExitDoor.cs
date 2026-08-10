@@ -5,4 +5,5 @@ public interface IExitDoor :
     IDisposable
 {
     event Action? StateChanged;
+    event Action? TimedOut;
 }
