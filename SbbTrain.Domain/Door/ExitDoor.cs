@@ -12,14 +12,15 @@ public class ExitDoor : IExitDoor
     private CancellationTokenSource? _cts;
 
     public ExitDoor(Guid id,
-        ITimeoutTimer autoCloseTimer,
+        ITimeoutTimerFactory timerFactory,
+        TimeSpan autoCloseTimerDuration,
         IDoorEventHandler handler,
         IExitDoorMechanism mechanism,
         IDoorStateNotifier notifier)
     {
         Id = id;
         State = DoorState.Closed;
-        _autoCloseTimer = autoCloseTimer;
+        _autoCloseTimer = timerFactory.Create(autoCloseTimerDuration, this);
         _handler = handler;
         _mechanism = mechanism;
         _notifier = notifier;

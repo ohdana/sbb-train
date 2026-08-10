@@ -17,7 +17,13 @@ public class ExitDoorTests
         _notifier = Substitute.For<IDoorStateNotifier>();
         _mechanism = Substitute.For<IExitDoorMechanism>();
         _doorId = Guid.NewGuid();
-        _door = new ExitDoor(_doorId, _autoCloseTimer, _handler, _mechanism, _notifier);
+
+        var timerDuration = TimeSpan.FromSeconds(60);
+        var timerFactory = Substitute.For<ITimeoutTimerFactory>();
+        timerFactory.Create(Arg.Any<TimeSpan>(), Arg.Any<ITimeoutable>())
+                    .Returns(_autoCloseTimer);
+
+        _door = new ExitDoor(_doorId, timerFactory, timerDuration, _handler, _mechanism, _notifier);
     }
 
     [Fact]

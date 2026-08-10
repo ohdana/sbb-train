@@ -9,14 +9,15 @@ public class TrainGapFiller : ITrainGapFiller
     private readonly IGapFillerStateNotifier _notifier;
 
     public TrainGapFiller(Guid id, 
-        ITimeoutTimer autoRetractTimer,
+        ITimeoutTimerFactory timerFactory,
+        TimeSpan autoRetractTimerDuration,
         IGapFillerEventHandler handler,
         IGapFillerMechanism mechanism,
         IGapFillerStateNotifier notifier)
     {
         Id = id;
         State = GapFillerState.Retracted;
-        _autoRetractTimer = autoRetractTimer;
+        _autoRetractTimer = timerFactory.Create(autoRetractTimerDuration, this);
         _handler = handler;
         _mechanism = mechanism;
         _notifier = notifier;
