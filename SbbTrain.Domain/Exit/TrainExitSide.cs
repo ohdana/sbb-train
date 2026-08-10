@@ -8,20 +8,25 @@ public class TrainExitSide : ITrainExitSide
     private readonly IDoorIndicator _doorIndicator;
     private readonly ITrainGapFiller _gapFiller;
     private readonly IEnumerable<IExitButton> _buttons;
+    private readonly ITimedOutErrorLogger _logger;
 
     public TrainExitSide(TrainSideType sideType,
         IExitDoor door,
         IDoorIndicator doorIndicator,
         ITrainGapFiller gapFiller,
-        IEnumerable<IExitButton> buttons)
+        IEnumerable<IExitButton> buttons,
+        ITimedOutErrorLogger logger)
     {
         SideType = sideType;
         _door = door;
         _doorIndicator = doorIndicator;
         _gapFiller = gapFiller;
         _buttons = buttons;
+        _logger = logger;
 
         _door.StateChanged += OnDoorStateChanged;
+        _door.TimedOut += OnDoorTimedOut;
+        _gapFiller.TimedOut += OnGapFillerTimedOut;
 
         foreach (var button in _buttons)
         {
@@ -62,6 +67,45 @@ public class TrainExitSide : ITrainExitSide
                 break;
             default:
                 break;
+        }
+    }
+
+    private void OnDoorTimedOut()
+    {
+        _ = HandleDoorTimedOutAsync();
+    }
+
+    private void OnGapFillerTimedOut()
+    {
+        if (_door.State != DoorState.Closed)
+        {
+            return;
+        }
+
+        _ = HandleGapFillerTimedOutAsync();
+    }
+
+    private async Task HandleGapFillerTimedOutAsync()
+    {
+        try
+        {
+            await _gapFiller.RetractAsync();
+        }
+        catch (Exception exception)
+        {
+            _logger.LogError(_gapFiller.Id, exception);
+        }
+    }
+
+    private async Task HandleDoorTimedOutAsync()
+    {
+        try
+        {
+            await _door.CloseAsync();
+        }
+        catch (Exception exception)
+        {
+            _logger.LogError(_door.Id, exception);
         }
     }
 

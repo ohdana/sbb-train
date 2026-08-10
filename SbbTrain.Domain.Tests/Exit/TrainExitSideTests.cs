@@ -9,6 +9,7 @@ public class TrainExitSideTests
     private readonly IDoorIndicator _doorIndicator;
     private readonly ITrainGapFiller _gapFiller;
     private readonly IEnumerable<IExitButton> _buttons;
+    private readonly ITimedOutErrorLogger _logger;
     private readonly TrainSideType _sideType;
 
     public TrainExitSideTests()
@@ -18,7 +19,8 @@ public class TrainExitSideTests
         _doorIndicator = Substitute.For<IDoorIndicator>();
         _gapFiller = Substitute.For<ITrainGapFiller>();
         _buttons = GetButtonSubstitutes(5);
-        _exitSide = new TrainExitSide(_sideType, _door, _doorIndicator, _gapFiller, _buttons);
+        _logger = Substitute.For<ITimedOutErrorLogger>();
+        _exitSide = new TrainExitSide(_sideType, _door, _doorIndicator, _gapFiller, _buttons, _logger);
     }
 
     [Fact]
