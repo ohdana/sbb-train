@@ -18,6 +18,9 @@ public class TrainExit : ITrainExit
         _sideA = sideA;
         _sideB = sideB;
         _notifier = notifier;
+
+        _sideA.OpenRequested += OnOpenRequested;
+        _sideB.OpenRequested += OnOpenRequested;
     }
 
     public void Enable(TrainSideType sideType)
@@ -30,12 +33,6 @@ public class TrainExit : ITrainExit
     {
         SetNoSafeSide();
         SetState(TrainExitState.Disabled);
-    }
-
-    public void RequestOpen()
-    {
-        RaiseOpenRequested();
-        NotifyOpenRequested();
     }
 
     public async Task OpenAsync()
@@ -80,13 +77,8 @@ public class TrainExit : ITrainExit
         SetState(TrainExitState.Faulted);
         _notifier.NotifyTrainExitStateChanged(Id, State);
     }
-    
-    private void NotifyOpenRequested()
-    {
-        _notifier.NotifyTrainExitOpenRequested(Id);
-        _sideA.HandlePendingOpenRequest();
-        _sideB.HandlePendingOpenRequest();
-    }
+
+    private void OnOpenRequested() => RaiseOpenRequested();
 
     private void SetNoSafeSide() => _safeSide = null;
 

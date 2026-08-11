@@ -69,29 +69,6 @@ public class TrainExitTests
         Assert.Equal(TrainExitState.Disabled, _exit.State);
     }
 
-    [Fact]
-    public void TrainExit_WhenRequestOpenCalled_CallsSidesToHandle()
-    {
-        // Arrange
-        // Act
-        _exit.RequestOpen();
-
-        // Assert
-        _sideA.Received(1).HandlePendingOpenRequest();
-        _sideB.Received(1).HandlePendingOpenRequest();
-    }
-
-    [Fact]
-    public void TrainExit_WhenRequestOpenCalled_NotifiesExitOpenRequested()
-    {
-        // Arrange
-        // Act
-        _exit.RequestOpen();
-
-        // Assert
-        _notifier.Received(1).NotifyTrainExitOpenRequested(_exitId);
-    }
-
     [Theory]
     [MemberData(nameof(TrainSideTypes))]
     public async Task TrainExit_WhenEnabledAndOpenCalled_OpensSafeSide(TrainSideType sideType)
