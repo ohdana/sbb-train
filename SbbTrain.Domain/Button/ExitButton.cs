@@ -3,23 +3,18 @@ public class ExitButton : IExitButton
     public Guid Id { get; }
     public ButtonState State { get; private set; }
 
-    private readonly IButtonEventHandler _handler;
+    public event Action? ButtonPressed;
+
     private readonly IButtonStateNotifier _notifier;
     
-    public ExitButton(Guid id, 
-        IButtonEventHandler handler,
-        IButtonStateNotifier notifier)
+    public ExitButton(Guid id, IButtonStateNotifier notifier)
     {
         Id = id;
         State = ButtonState.Idle;
-        _handler = handler;
         _notifier = notifier;
     }
 
-    public void Press()
-    {
-        _handler.HandleButtonPressed(Id);
-    }
+    public void Press() => RaiseButtonPressed();
 
     public void OnEventReceived(EventType eventType)
     {
@@ -38,8 +33,7 @@ public class ExitButton : IExitButton
         return ButtonStateMap.GetStateByEvent(eventType);
     }
 
-    private void SetState(ButtonState state)
-    {
-        State = state;
-    }
+    private void SetState(ButtonState state) => State = state;
+
+    private void RaiseButtonPressed() => ButtonPressed?.Invoke();
 }

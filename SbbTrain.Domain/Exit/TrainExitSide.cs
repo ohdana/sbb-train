@@ -30,7 +30,8 @@ public class TrainExitSide : ITrainExitSide
 
         foreach (var button in _buttons)
         {
-            OpenRequested += button.OnEventReceived;   
+            OpenRequested += button.OnEventReceived;
+            button.ButtonPressed += OnButtonPressed;
         }
     }
 
@@ -46,10 +47,9 @@ public class TrainExitSide : ITrainExitSide
         await _gapFiller.RetractAsync();
     }
 
-    public void HandlePendingOpenRequest()
-    {
-        RaiseOpenRequested();
-    }
+    public void HandlePendingOpenRequest() => RaiseOpenRequested();
+
+    private void OnButtonPressed() => RaiseOpenRequested();
 
     private void RaiseOpenRequested() => OpenRequested?.Invoke(EventType.ExitOpenRequested);
 

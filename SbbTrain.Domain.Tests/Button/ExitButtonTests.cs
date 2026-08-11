@@ -3,17 +3,15 @@ using NSubstitute;
 
 public class ExitButtonTests
 {
-    private readonly IButtonEventHandler _handler;
     private readonly IButtonStateNotifier _notifier;
     private readonly Guid _buttonId;
     private readonly ExitButton _button;
 
     public ExitButtonTests()
     {
-        _handler = Substitute.For<IButtonEventHandler>();
         _notifier = Substitute.For<IButtonStateNotifier>();
         _buttonId = Guid.NewGuid();
-        _button = new ExitButton(_buttonId, _handler, _notifier);
+        _button = new ExitButton(_buttonId, _notifier);
     }
 
     [Fact]
@@ -26,14 +24,17 @@ public class ExitButtonTests
     }
 
     [Fact]
-    public void Button_WhenPressed_CallsHandler()
+    public void Button_WhenPressed_RaisesPressed()
     {
         // Arrange
+        var raised = false;
+        _button.ButtonPressed += () => raised = true;
+
         // Act
         _button.Press();
 
         // Assert
-        _handler.Received(1).HandleButtonPressed(_buttonId);
+        Assert.True(raised);
     }
 
     [Fact]
