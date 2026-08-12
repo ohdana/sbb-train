@@ -8,14 +8,14 @@ public class TrainExitSide : ITrainExitSide
     private readonly IDoorIndicator _doorIndicator;
     private readonly ITrainGapFiller _gapFiller;
     private readonly IEnumerable<IExitButton> _buttons;
-    private readonly ITimedOutErrorLogger _logger;
+    private readonly ITrainLogger _logger;
 
     public TrainExitSide(TrainSideType sideType,
         IExitDoor door,
         IDoorIndicator doorIndicator,
         ITrainGapFiller gapFiller,
         IEnumerable<IExitButton> buttons,
-        ITimedOutErrorLogger logger)
+        ITrainLogger logger)
     {
         SideType = sideType;
         _door = door;

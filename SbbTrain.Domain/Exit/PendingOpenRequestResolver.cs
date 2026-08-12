@@ -1,10 +1,10 @@
 public class PendingOpenRequestResolver : IPendingOpenRequestResolver
 {
     private readonly ITrainExit _exit;
-    private readonly IPendingOpenRequestLogger _logger;
+    private readonly ITrainLogger _logger;
     private bool _hasPendingOpenRequest;
 
-    public PendingOpenRequestResolver(ITrainExit exit, IPendingOpenRequestLogger logger)
+    public PendingOpenRequestResolver(ITrainExit exit, ITrainLogger logger)
     {
         _exit = exit;
         _logger = logger;
@@ -46,7 +46,7 @@ public class PendingOpenRequestResolver : IPendingOpenRequestResolver
         }
         catch (Exception exception)
         {
-            _logger.LogResolveFailure(_exit.Id, exception);
+            _logger.LogError(_exit.Id, exception);
         }
         finally
         {
