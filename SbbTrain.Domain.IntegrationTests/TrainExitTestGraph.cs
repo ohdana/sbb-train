@@ -15,10 +15,10 @@ public static class TestCompositionRoot
         IExitDoorMechanism doorMechanismA,
         IExitDoorMechanism doorMechanismB,
         IGapFillerMechanism gapFillerMechanismA,
-        IGapFillerMechanism gapFillerMechanismB)
+        IGapFillerMechanism gapFillerMechanismB,
+        ITrainNotifier notifier,
+        ITrainLogger logger)
     {
-        var notifier = Substitute.For<ITrainNotifier>();
-        var logger = Substitute.For<ITrainLogger>();
         var timerFactory = new TimeoutTimerFactory();
 
         var (sideA, buttonsA) = CreateSide(

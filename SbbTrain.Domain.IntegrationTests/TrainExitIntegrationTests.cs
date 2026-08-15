@@ -7,6 +7,8 @@ public class TrainExitIntegrationTests
     private readonly IExitDoorMechanism _doorMechanismB;
     private readonly IGapFillerMechanism _gapFillerMechanismA;
     private readonly IGapFillerMechanism _gapFillerMechanismB;
+    private readonly ITrainNotifier _notifier;
+    private readonly ITrainLogger _logger;
     private readonly TrainExitTestGraph _graph;
 
     public TrainExitIntegrationTests()
@@ -15,10 +17,13 @@ public class TrainExitIntegrationTests
         _doorMechanismB = Substitute.For<IExitDoorMechanism>();
         _gapFillerMechanismA = Substitute.For<IGapFillerMechanism>();
         _gapFillerMechanismB = Substitute.For<IGapFillerMechanism>();
+        _notifier = Substitute.For<ITrainNotifier>();
+        _logger = Substitute.For<ITrainLogger>();
 
         _graph = TestCompositionRoot.CreateTrainExit(
             _doorMechanismA, _doorMechanismB,
-            _gapFillerMechanismA, _gapFillerMechanismB);
+            _gapFillerMechanismA, _gapFillerMechanismB,
+            _notifier, _logger);
     }
 
     [Theory]
