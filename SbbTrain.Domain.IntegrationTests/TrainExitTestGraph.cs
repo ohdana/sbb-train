@@ -1,9 +1,17 @@
 using NSubstitute;
 
+public record TrainExitSideTestGraph(
+    ITrainExitSide Side,
+    IExitDoor Door,
+    IDoorIndicator DoorIndicator,
+    ITrainGapFiller GapFiller,
+    IReadOnlyList<IExitButton> Buttons
+);
+
 public record TrainExitTestGraph(
     ITrainExit Exit,
-    IReadOnlyList<IExitButton> ButtonsA,
-    IReadOnlyList<IExitButton> ButtonsB);
+    TrainExitSideTestGraph SideA,
+    TrainExitSideTestGraph SideB);
 
 public static class TestCompositionRoot
 {
@@ -21,20 +29,20 @@ public static class TestCompositionRoot
     {
         var timerFactory = new TimeoutTimerFactory();
 
-        var (sideA, buttonsA) = CreateSide(
+        var graphSideA = CreateSide(
             TrainSideType.A, doorMechanismA, gapFillerMechanismA,
             notifier, logger, timerFactory);
-        var (sideB, buttonsB) = CreateSide(
+        var graphSideB = CreateSide(
             TrainSideType.B, doorMechanismB, gapFillerMechanismB,
             notifier, logger, timerFactory);
 
-        var exit = new TrainExit(Guid.NewGuid(), sideA, sideB, notifier);
+        var exit = new TrainExit(Guid.NewGuid(), graphSideA.Side, graphSideB.Side, notifier);
         _ = new PendingOpenRequestResolver(exit, logger);
 
-        return new TrainExitTestGraph(exit, buttonsA, buttonsB);
+        return new TrainExitTestGraph(exit, graphSideA, graphSideB);
     }
 
-    private static (ITrainExitSide side, IReadOnlyList<IExitButton> buttons) CreateSide(
+    private static TrainExitSideTestGraph CreateSide(
         TrainSideType sideType, IExitDoorMechanism doorMechanism, IGapFillerMechanism gapFillerMechanism,
         ITrainNotifier notifier, ITrainLogger logger, ITimeoutTimerFactory timerFactory)
     {
@@ -44,8 +52,10 @@ public static class TestCompositionRoot
         var buttons = CreateButtons(notifier);
 
         var side = new TrainExitSide(sideType, door, doorIndicator, gapFiller, buttons, logger);
+        var sideGraph = new TrainExitSideTestGraph(
+            side, door, doorIndicator, gapFiller, buttons);
 
-        return (side, buttons);
+        return sideGraph;
     }
 
     private static IExitDoor CreateDoor(IExitDoorMechanism mechanism,

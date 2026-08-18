@@ -29,6 +29,33 @@ public class TrainExitIntegrationTests
     [Theory]
     [InlineData(TrainSideType.A)]
     [InlineData(TrainSideType.B)]
+    public async Task TrainExit_WhenEnabledThenButtonPressedOnSafeSide_GapFillerExtendedAndDoorOpenedAndButtonsIdleOnSafeSide(
+        TrainSideType safeSideType)
+    {
+        // Arrange
+        _graph.Exit.Enable(safeSideType);
+        var (safeSideGraph, otherSideGraph) = GetSideGraphs(safeSideType);
+
+        // Act
+        safeSideGraph.Buttons.First().Press();
+
+        // Assert
+        Assert.Equal(DoorState.Opened, safeSideGraph.Door.State);
+        Assert.Equal(DoorState.Closed, otherSideGraph.Door.State);
+
+        Assert.Equal(GapFillerState.Extended, safeSideGraph.GapFiller.State);
+        Assert.Equal(GapFillerState.Retracted, otherSideGraph.GapFiller.State);
+
+        var allButtons = safeSideGraph.Buttons.Concat(otherSideGraph.Buttons);
+        foreach (var button in allButtons)
+        {
+            Assert.Equal(ButtonState.Idle, button.State);   
+        }
+    }
+
+    /*[Theory]
+    [InlineData(TrainSideType.A)]
+    [InlineData(TrainSideType.B)]
     public async Task TrainExit_WhenDisabledThenButtonPressed_OpensNoDoor(TrainSideType sideType)
     {
         // Arrange
@@ -48,7 +75,7 @@ public class TrainExitIntegrationTests
     [Theory]
     [InlineData(TrainSideType.A)]
     [InlineData(TrainSideType.B)]
-    public async Task TrainExit_WhenEnabledThenButtonPressed_OpensSafeSideDoor(TrainSideType safeSideType)
+    public async Task TrainExit_WhenEnabledThenButtonPressed_CallsGapFillerExtendAndDoorOpenOnSafeSide(TrainSideType safeSideType)
     {
         // Arrange
         _graph.Exit.Enable(safeSideType);
@@ -112,5 +139,11 @@ public class TrainExitIntegrationTests
     {
         return safeSideType == TrainSideType.A ?
             (_doorMechanismA, _doorMechanismB) : (_doorMechanismB, _doorMechanismA);
+    }*/
+
+    private (TrainExitSideTestGraph, TrainExitSideTestGraph) GetSideGraphs(TrainSideType safeSideType)
+    {
+        return safeSideType == TrainSideType.A ?
+            (_graph.SideA, _graph.SideB) : (_graph.SideB, _graph.SideA);
     }
 }

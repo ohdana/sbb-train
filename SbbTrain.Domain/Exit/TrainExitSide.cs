@@ -3,6 +3,7 @@ public class TrainExitSide : ITrainExitSide
     public TrainSideType SideType { get; }
 
     public event Action? OpenRequested;
+    public event Action<EventType>? ButtonNotificationRequested;
 
     private readonly IExitDoor _door;
     private readonly IDoorIndicator _doorIndicator;
@@ -48,6 +49,14 @@ public class TrainExitSide : ITrainExitSide
     }
 
     public void HandlePendingOpenRequest() => RaiseOpenRequested();
+
+    public void HandleButtonNotificationRequest(EventType eventType)
+    {
+        foreach (var button in _buttons)
+        {
+            button.OnEventReceived(eventType);
+        }
+    }
 
     private void OnButtonPressed() => RaiseOpenRequested();
 
@@ -109,6 +118,14 @@ public class TrainExitSide : ITrainExitSide
         }
     }
 
-    private void HandleDoorBusy() => _doorIndicator.OnEventReceived(EventType.DoorBusy);
-    private void HandleDoorIdle() => _doorIndicator.OnEventReceived(EventType.DoorIdle);
+    private void HandleDoorBusy() => OnEventReceived(EventType.DoorBusy);
+    private void HandleDoorIdle() => OnEventReceived(EventType.DoorIdle);
+    
+    private void OnEventReceived(EventType eventType)
+    {
+        _doorIndicator.OnEventReceived(eventType);
+        RaiseButtonNotificationRequested(eventType);
+    }
+
+    private void RaiseButtonNotificationRequested(EventType eventType) => ButtonNotificationRequested?.Invoke(eventType);
 }

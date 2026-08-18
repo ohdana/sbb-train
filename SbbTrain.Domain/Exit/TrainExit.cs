@@ -21,6 +21,9 @@ public class TrainExit : ITrainExit
 
         _sideA.OpenRequested += OnOpenRequested;
         _sideB.OpenRequested += OnOpenRequested;
+
+        _sideA.ButtonNotificationRequested += OnButtonNotificationRequested;
+        _sideB.ButtonNotificationRequested += OnButtonNotificationRequested;
     }
 
     public void Enable(TrainSideType sideType)
@@ -79,6 +82,12 @@ public class TrainExit : ITrainExit
     }
 
     private void OnOpenRequested() => RaiseOpenRequested();
+
+    private void OnButtonNotificationRequested(EventType eventType)
+    {
+        _sideA.HandleButtonNotificationRequest(eventType);
+        _sideB.HandleButtonNotificationRequest(eventType);
+    }
 
     private void SetNoSafeSide() => _safeSide = null;
 
