@@ -15,9 +15,9 @@ public record TrainExitTestGraph(
 
 public static class TestCompositionRoot
 {
+    public const int NOfButtonsPerSide = 3;
     private static readonly TimeSpan AutoCloseTimerDuration = TimeSpan.FromSeconds(60);
     private static readonly TimeSpan AutoRetractTimerDuration = TimeSpan.FromSeconds(300);
-    private const int NOfButtons = 5;
 
     public static TrainExitTestGraph CreateTrainExit(
         IExitDoorMechanism doorMechanismA,
@@ -79,7 +79,7 @@ public static class TestCompositionRoot
 
     private static IReadOnlyList<IExitButton> CreateButtons(ITrainNotifier notifier)
     {
-        return Enumerable.Range(0, NOfButtons)
+        return Enumerable.Range(0, NOfButtonsPerSide)
                          .Select(i => CreateButton(notifier))
                          .ToList();
     }
