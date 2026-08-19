@@ -52,6 +52,32 @@ public class TrainExitIntegrationTests
         }
     }
 
+    [Theory]
+    [MemberData(nameof(SafeSideTypeAndButtonIndexCombinations))]
+    public async Task TrainExit_WhenEnabledThenButtonPressedOnUnsafeSide_GapFillerExtendedAndDoorOpenedAndButtonsIdleOnSafeSide(
+        TrainSideType safeSideType, int buttonIndex)
+    {
+        // Arrange
+        _graph.Exit.Enable(safeSideType);
+        var (safeSideGraph, otherSideGraph) = GetSideGraphs(safeSideType);
+
+        // Act
+        otherSideGraph.Buttons.ElementAt(buttonIndex).Press();
+
+        // Assert
+        Assert.Equal(DoorState.Opened, safeSideGraph.Door.State);
+        Assert.Equal(DoorState.Closed, otherSideGraph.Door.State);
+
+        Assert.Equal(GapFillerState.Extended, safeSideGraph.GapFiller.State);
+        Assert.Equal(GapFillerState.Retracted, otherSideGraph.GapFiller.State);
+
+        var allButtons = safeSideGraph.Buttons.Concat(otherSideGraph.Buttons);
+        foreach (var button in allButtons)
+        {
+            Assert.Equal(ButtonState.Idle, button.State);   
+        }
+    }
+
     private (TrainExitSideTestGraph, TrainExitSideTestGraph) GetSideGraphs(TrainSideType safeSideType)
     {
         return safeSideType == TrainSideType.A ?
