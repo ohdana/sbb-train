@@ -36,7 +36,8 @@ public class TrainExitIntegrationTests
         var (safeSideGraph, otherSideGraph) = GetSideGraphs(safeSideType);
 
         // Act
-        safeSideGraph.Buttons.ElementAt(buttonIndex).Press();
+        var currentButton = safeSideGraph.Buttons.ElementAt(buttonIndex);
+        await PressButtonsAndWaitUntilIdle(new List<IExitButton>() { currentButton });
 
         // Assert
         Assert.Equal(DoorState.Opened, safeSideGraph.Door.State);
@@ -62,7 +63,8 @@ public class TrainExitIntegrationTests
         var (safeSideGraph, otherSideGraph) = GetSideGraphs(safeSideType);
 
         // Act
-        otherSideGraph.Buttons.ElementAt(buttonIndex).Press();
+        var currentButton = otherSideGraph.Buttons.ElementAt(buttonIndex);
+        await PressButtonsAndWaitUntilIdle(new List<IExitButton>() { currentButton });
 
         // Assert
         Assert.Equal(DoorState.Opened, safeSideGraph.Door.State);
@@ -78,10 +80,70 @@ public class TrainExitIntegrationTests
         }
     }
 
+    [Theory]
+    [InlineData(TrainSideType.A)]
+    [InlineData(TrainSideType.B)]
+    public async Task TrainExit_WhenEnabledThenAllButtonsPressed_GapFillerExtendedAndDoorOpenedAndButtonsIdleOnSafeSide(
+        TrainSideType safeSideType)
+    {
+        // Arrange
+        _graph.Exit.Enable(safeSideType);
+        var (safeSideGraph, otherSideGraph) = GetSideGraphs(safeSideType);
+        var allButtons = safeSideGraph.Buttons.Concat(otherSideGraph.Buttons);
+
+        // Act
+        await PressButtonsAndWaitUntilIdle(allButtons);
+
+        // Assert
+        Assert.Equal(DoorState.Opened, safeSideGraph.Door.State);
+        Assert.Equal(DoorState.Closed, otherSideGraph.Door.State);
+
+        Assert.Equal(GapFillerState.Extended, safeSideGraph.GapFiller.State);
+        Assert.Equal(GapFillerState.Retracted, otherSideGraph.GapFiller.State);
+
+        foreach (var button in allButtons)
+        {
+            Assert.Equal(ButtonState.Idle, button.State);   
+        }
+    }
+
+    private async Task PressButtonsAndWaitUntilIdle(IEnumerable<IExitButton> buttons)
+    {
+        var buttonsIdle = WaitUntilButtonsIdle(buttons);
+        var buttonsPressTasks = buttons.Select(button => Task.Run(() => button.Press()))
+                                       .ToArray();
+        await Task.WhenAll(buttonsPressTasks);
+
+        const int timeoutSeconds = 1;
+        await buttonsIdle.WaitAsync(TimeSpan.FromSeconds(timeoutSeconds));
+    }
+
+    private Task WaitUntilButtonsIdle(IEnumerable<IExitButton> buttons)
+    {
+        var tcs = new TaskCompletionSource();
+        _notifier
+            .When(x => x.NotifyButtonStateChanged(Arg.Any<Guid>(), Arg.Any<ButtonState>()))
+            .Do(_ =>
+            {
+                if (buttons.All(b => b.State == ButtonState.Idle))
+                {
+                    tcs.TrySetResult();
+                }
+            });   
+
+        return tcs.Task;
+    }
+
     private (TrainExitSideTestGraph, TrainExitSideTestGraph) GetSideGraphs(TrainSideType safeSideType)
     {
         return safeSideType == TrainSideType.A ?
             (_graph.SideA, _graph.SideB) : (_graph.SideB, _graph.SideA);
+    }
+
+    private (IExitDoorMechanism, IExitDoorMechanism) GetDoorMechanisms(TrainSideType safeSideType)
+    {
+        return safeSideType == TrainSideType.A ?
+            (_doorMechanismA, _doorMechanismB) : (_doorMechanismB, _doorMechanismA);
     }
 
     public static IEnumerable<object[]> SafeSideTypeAndButtonIndexCombinations()
