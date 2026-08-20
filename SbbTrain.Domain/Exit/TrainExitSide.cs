@@ -38,14 +38,18 @@ public class TrainExitSide : ITrainExitSide
 
     public async Task OpenAsync()
     {
+        RaiseButtonNotificationRequested(EventType.DoorBusy);
         await _gapFiller.ExtendAsync();
         await _door.OpenAsync();
+        RaiseButtonNotificationRequested(EventType.DoorIdle);
     }
     
     public async Task CloseAsync()
     {
+        RaiseButtonNotificationRequested(EventType.DoorBusy);
         await _door.CloseAsync();
         await _gapFiller.RetractAsync();
+        RaiseButtonNotificationRequested(EventType.DoorIdle);
     }
 
     public void HandlePendingOpenRequest() => RaiseOpenRequested();
@@ -118,14 +122,8 @@ public class TrainExitSide : ITrainExitSide
         }
     }
 
-    private void HandleDoorBusy() => OnEventReceived(EventType.DoorBusy);
-    private void HandleDoorIdle() => OnEventReceived(EventType.DoorIdle);
-    
-    private void OnEventReceived(EventType eventType)
-    {
-        _doorIndicator.OnEventReceived(eventType);
-        RaiseButtonNotificationRequested(eventType);
-    }
+    private void HandleDoorBusy() => _doorIndicator.OnEventReceived(EventType.DoorBusy);
+    private void HandleDoorIdle() => _doorIndicator.OnEventReceived(EventType.DoorIdle);
 
     private void RaiseButtonNotificationRequested(EventType eventType) => ButtonNotificationRequested?.Invoke(eventType);
 }
