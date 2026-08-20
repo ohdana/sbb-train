@@ -110,9 +110,9 @@ public class TrainExitIntegrationTests
     private async Task PressButtonsAndWaitUntilIdle(IEnumerable<IExitButton> buttons)
     {
         var buttonsIdle = WaitUntilButtonsIdle(buttons);
-        var buttonsPressTasks = buttons.Select(button => Task.Run(() => button.Press()))
+        var buttonsPressed = buttons.Select(button => Task.Run(() => button.Press()))
                                        .ToArray();
-        await Task.WhenAll(buttonsPressTasks);
+        await Task.WhenAll(buttonsPressed);
 
         const int timeoutSeconds = 1;
         await buttonsIdle.WaitAsync(TimeSpan.FromSeconds(timeoutSeconds));
