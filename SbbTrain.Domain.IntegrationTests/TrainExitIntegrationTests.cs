@@ -111,7 +111,7 @@ public class TrainExitIntegrationTests
     {
         var buttonsIdle = WaitUntilButtonsIdle(buttons);
         var buttonsPressed = buttons.Select(button => Task.Run(() => button.Press()))
-                                       .ToArray();
+                                    .ToArray();
         await Task.WhenAll(buttonsPressed);
 
         const int timeoutSeconds = 1;
