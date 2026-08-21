@@ -31,8 +31,8 @@ public class TrainExitSide : ITrainExitSide
 
         foreach (var button in _buttons)
         {
-            OpenRequested += () => button.OnEventReceived(EventType.ExitOpenRequested);
             button.ButtonPressed += OnButtonPressed;
+            OpenRequested += OnOpenRequested;
         }
     }
 
@@ -63,6 +63,8 @@ public class TrainExitSide : ITrainExitSide
     }
 
     private void OnButtonPressed() => RaiseOpenRequested();
+    
+    private void OnOpenRequested() => RaiseButtonNotificationRequested(EventType.ExitOpenRequested);
 
     private void RaiseOpenRequested() => OpenRequested?.Invoke();
 

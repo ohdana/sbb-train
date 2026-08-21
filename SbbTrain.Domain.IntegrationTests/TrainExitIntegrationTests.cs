@@ -125,6 +125,52 @@ public class TrainExitIntegrationTests
         AssertSafeSideOpenedAndAllButtonsIdle(safeSideGraph, otherSideGraph);
     }
 
+    [Theory]
+    [MemberData(nameof(SafeSideTypeAndButtonIndexCombinations))]
+    public async Task TrainExit_WhenDisabledThenButtonPressedOnSafeSide_AllButtonsActive(
+        TrainSideType safeSideType, int buttonIndex)
+    {
+        // Arrange
+        var (safeSideGraph, otherSideGraph) = GetSideGraphs(safeSideType);
+        var button = safeSideGraph.Buttons.ElementAt(buttonIndex);
+        var allButtons = safeSideGraph.Buttons.Concat(otherSideGraph.Buttons);
+        var buttonsActive = WaitUntilButtonsActive(allButtons);
+
+        _graph.Exit.Disable();
+
+        // Act
+        button.Press();
+        await buttonsActive.WaitAsync(TimeSpan.FromSeconds(BUTTONS_IDLE_TIMEOUT_SECONDS));
+
+        // Assert
+        foreach (var b in allButtons)
+        {
+            Assert.Equal(ButtonState.Active, b.State);   
+        }
+    }
+
+    private Task WaitUntilButtonsIdle(IEnumerable<IExitButton> buttons)
+        => WaitUntilButtonsInState(buttons, ButtonState.Idle);
+
+    private Task WaitUntilButtonsActive(IEnumerable<IExitButton> buttons)
+        => WaitUntilButtonsInState(buttons, ButtonState.Active);
+
+    private Task WaitUntilButtonsInState(IEnumerable<IExitButton> buttons, ButtonState state)
+    {
+        var tcs = new TaskCompletionSource();
+        _notifier
+            .When(x => x.NotifyButtonStateChanged(Arg.Any<Guid>(), Arg.Any<ButtonState>()))
+            .Do(_ =>
+            {
+                if (buttons.All(b => b.State == state))
+                {
+                    tcs.TrySetResult();
+                }
+            });   
+
+        return tcs.Task;
+    }
+
     private async Task PressButtonsAndWaitUntilIdle(IEnumerable<IExitButton> buttons)
     {
         var buttonsIdle = WaitUntilButtonsIdle(buttons);
@@ -137,22 +183,6 @@ public class TrainExitIntegrationTests
         var buttonsPressed = buttons.Select(button => Task.Run(() => button.Press()))
                                     .ToArray();
         await Task.WhenAll(buttonsPressed);
-    }
-
-    private Task WaitUntilButtonsIdle(IEnumerable<IExitButton> buttons)
-    {
-        var tcs = new TaskCompletionSource();
-        _notifier
-            .When(x => x.NotifyButtonStateChanged(Arg.Any<Guid>(), Arg.Any<ButtonState>()))
-            .Do(_ =>
-            {
-                if (buttons.All(b => b.State == ButtonState.Idle))
-                {
-                    tcs.TrySetResult();
-                }
-            });   
-
-        return tcs.Task;
     }
 
     private (TrainExitSideTestGraph, TrainExitSideTestGraph) GetSideGraphs(TrainSideType safeSideType)
