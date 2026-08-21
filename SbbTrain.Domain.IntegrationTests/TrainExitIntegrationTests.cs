@@ -127,13 +127,13 @@ public class TrainExitIntegrationTests
 
     [Theory]
     [MemberData(nameof(SafeSideTypeAndButtonIndexCombinations))]
-    public async Task TrainExit_WhenDisabledThenButtonPressedOnSafeSide_AllButtonsActive(
+    public async Task TrainExit_WhenDisabledThenButtonPressed_AllButtonsActive(
         TrainSideType safeSideType, int buttonIndex)
     {
         // Arrange
-        var (safeSideGraph, otherSideGraph) = GetSideGraphs(safeSideType);
-        var button = safeSideGraph.Buttons.ElementAt(buttonIndex);
-        var allButtons = safeSideGraph.Buttons.Concat(otherSideGraph.Buttons);
+        var (oneSideGraph, otherSideGraph) = GetSideGraphs(safeSideType);
+        var button = oneSideGraph.Buttons.ElementAt(buttonIndex);
+        var allButtons = oneSideGraph.Buttons.Concat(otherSideGraph.Buttons);
         var buttonsActive = WaitUntilButtonsActive(allButtons);
 
         _graph.Exit.Disable();
