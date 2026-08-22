@@ -149,6 +149,40 @@ public class TrainExitIntegrationTests
         }
     }
 
+    [Theory]
+    [InlineData(TrainSideType.A)]
+    [InlineData(TrainSideType.B)]
+    public async Task TrainExit_WhenDoorOpening_DoorIndicatorAndSButtonsBusy(TrainSideType safeSideType)
+    {
+        // Arrange
+        var (safeSideGraph, otherSideGraph) = GetSideGraphs(safeSideType);
+        var allButtons = safeSideGraph.Buttons.Concat(otherSideGraph.Buttons);
+
+        _graph.Exit.Enable(safeSideType);
+
+        DoorIndicatorState? capturedIndicatorState  = null;
+        ButtonState? capturedButtonState = null;
+
+        safeSideGraph.Door.StateChanged += () =>
+        {
+            if (safeSideGraph.Door.State == DoorState.Opening)
+            {
+                capturedIndicatorState = safeSideGraph.DoorIndicator.State;
+                var buttonsStates = allButtons.Select(b => b.State).Distinct().ToList();
+                capturedButtonState = buttonsStates is [var soleState]
+                    ? soleState 
+                    : null;
+            }
+        };
+
+        // Act
+        await _graph.Exit.OpenAsync();
+
+        // Assert
+        Assert.Equal(DoorIndicatorState.Busy, capturedIndicatorState);
+        Assert.Equal(ButtonState.Busy, capturedButtonState);
+    }
+
     private Task WaitUntilButtonsIdle(IEnumerable<IExitButton> buttons)
         => WaitUntilButtonsInState(buttons, ButtonState.Idle);
 
