@@ -152,7 +152,7 @@ public class TrainExitIntegrationTests
     [Theory]
     [InlineData(TrainSideType.A)]
     [InlineData(TrainSideType.B)]
-    public async Task TrainExit_WhenDoorOpening_DoorIndicatorAndSButtonsBusy(TrainSideType safeSideType)
+    public async Task TrainExit_WhenDoorOpening_DoorIndicatorAndButtonsBusy(TrainSideType safeSideType)
     {
         // Arrange
         var (safeSideGraph, otherSideGraph) = GetSideGraphs(safeSideType);
@@ -177,6 +177,40 @@ public class TrainExitIntegrationTests
 
         // Act
         await _graph.Exit.OpenAsync();
+
+        // Assert
+        Assert.Equal(DoorIndicatorState.Busy, capturedIndicatorState);
+        Assert.Equal(ButtonState.Busy, capturedButtonState);
+    }
+
+    [Theory]
+    [InlineData(TrainSideType.A)]
+    [InlineData(TrainSideType.B)]
+    public async Task TrainExit_WhenDoorClosing_DoorIndicatorAndButtonsBusy(TrainSideType safeSideType)
+    {
+        // Arrange
+        var (safeSideGraph, otherSideGraph) = GetSideGraphs(safeSideType);
+        var allButtons = safeSideGraph.Buttons.Concat(otherSideGraph.Buttons);
+
+        DoorIndicatorState? capturedIndicatorState  = null;
+        ButtonState? capturedButtonState = null;
+
+        safeSideGraph.Door.StateChanged += () =>
+        {
+            if (safeSideGraph.Door.State == DoorState.Closing)
+            {
+                capturedIndicatorState = safeSideGraph.DoorIndicator.State;
+                var buttonsStates = allButtons.Select(b => b.State).Distinct().ToList();
+                capturedButtonState = buttonsStates is [var soleState]
+                    ? soleState 
+                    : null;
+            }
+        };
+        _graph.Exit.Enable(safeSideType);
+        await _graph.Exit.OpenAsync();
+
+        // Act
+        await _graph.Exit.CloseAsync();
 
         // Assert
         Assert.Equal(DoorIndicatorState.Busy, capturedIndicatorState);
