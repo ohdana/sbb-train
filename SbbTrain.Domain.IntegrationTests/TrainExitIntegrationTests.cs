@@ -162,17 +162,19 @@ public class TrainExitIntegrationTests
 
         DoorIndicatorState? capturedIndicatorState  = null;
         ButtonState? capturedButtonState = null;
-
         safeSideGraph.Door.StateChanged += () =>
         {
-            if (safeSideGraph.Door.State == DoorState.Opening)
+            if (safeSideGraph.Door.State != DoorState.Opening)
             {
-                capturedIndicatorState = safeSideGraph.DoorIndicator.State;
-                var buttonsStates = allButtons.Select(b => b.State).Distinct().ToList();
-                capturedButtonState = buttonsStates is [var soleState]
-                    ? soleState 
-                    : null;
+                return;
             }
+
+            capturedIndicatorState = safeSideGraph.DoorIndicator.State;
+
+            var buttonsStates = allButtons.Select(b => b.State).Distinct().ToList();
+            capturedButtonState = buttonsStates is [var soleState]
+                ? soleState 
+                : null;
         };
 
         // Act
@@ -194,18 +196,21 @@ public class TrainExitIntegrationTests
 
         DoorIndicatorState? capturedIndicatorState  = null;
         ButtonState? capturedButtonState = null;
-
         safeSideGraph.Door.StateChanged += () =>
         {
-            if (safeSideGraph.Door.State == DoorState.Closing)
+            if (safeSideGraph.Door.State != DoorState.Closing)
             {
-                capturedIndicatorState = safeSideGraph.DoorIndicator.State;
-                var buttonsStates = allButtons.Select(b => b.State).Distinct().ToList();
-                capturedButtonState = buttonsStates is [var soleState]
-                    ? soleState 
-                    : null;
+                return;
             }
+
+            capturedIndicatorState = safeSideGraph.DoorIndicator.State;
+            
+            var buttonsStates = allButtons.Select(b => b.State).Distinct().ToList();
+            capturedButtonState = buttonsStates is [var soleState]
+                ? soleState 
+                : null;
         };
+
         _graph.Exit.Enable(safeSideType);
         await _graph.Exit.OpenAsync();
 
