@@ -172,9 +172,7 @@ public class TrainExitIntegrationTests
             capturedIndicatorState = safeSideGraph.DoorIndicator.State;
 
             var buttonsStates = allButtons.Select(b => b.State).Distinct().ToList();
-            capturedButtonState = buttonsStates is [var soleState]
-                ? soleState 
-                : null;
+            capturedButtonState = buttonsStates is [var singleValue] ? singleValue : null;
         };
 
         // Act
@@ -206,9 +204,7 @@ public class TrainExitIntegrationTests
             capturedIndicatorState = safeSideGraph.DoorIndicator.State;
             
             var buttonsStates = allButtons.Select(b => b.State).Distinct().ToList();
-            capturedButtonState = buttonsStates is [var soleState]
-                ? soleState 
-                : null;
+            capturedButtonState = buttonsStates is [var singleValue] ? singleValue : null;
         };
 
         _graph.Exit.Enable(safeSideType);
