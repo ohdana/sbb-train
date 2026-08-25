@@ -16,8 +16,8 @@ public record TrainExitTestGraph(
 public static class TestCompositionRoot
 {
     public const int NOfButtonsPerSide = 3;
-    private static readonly TimeSpan AutoCloseTimerDuration = TimeSpan.FromSeconds(60);
-    private static readonly TimeSpan AutoRetractTimerDuration = TimeSpan.FromSeconds(300);
+    private static readonly TimeSpan AutoCloseTimerDuration = TimeSpan.FromSeconds(1);
+    private static readonly TimeSpan AutoRetractTimerDuration = TimeSpan.FromSeconds(2);
 
     public static TrainExitTestGraph CreateTrainExit(
         IExitDoorMechanism doorMechanismA,

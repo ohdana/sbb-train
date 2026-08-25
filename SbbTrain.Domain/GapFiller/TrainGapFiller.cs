@@ -33,7 +33,6 @@ public class TrainGapFiller : ITrainGapFiller
         {
             await _mechanism.ExtendAsync();
             SetState(GapFillerState.Extended);
-            _autoRetractTimer.Reset();
         }
         catch (Exception)
         {
@@ -53,7 +52,6 @@ public class TrainGapFiller : ITrainGapFiller
         {
             await _mechanism.RetractAsync();
             SetState(GapFillerState.Retracted);
-            _autoRetractTimer.Stop();
         }
         catch (Exception)
         {
@@ -67,26 +65,21 @@ public class TrainGapFiller : ITrainGapFiller
         RaiseTimedOut();
     }
 
-    public void OnEventReceived(EventType eventType)
-    {
-        HandleEventReceived(eventType);
-    }
+    public void ResetAutoRetractTimer() => _autoRetractTimer.Reset();
 
-    private void HandleEventReceived(EventType eventType)
-    {
-        if (eventType == EventType.ExitOpenRequested) 
-        {
-            _autoRetractTimer.Reset();
-        }
-    }
+    public void StopAutoRetractTimer() => _autoRetractTimer.Stop();
 
     private void HandleGapFillerMechanismException()
     {
         SetState(GapFillerState.Faulted);
-        _notifier.NotifyGapFillerStateChanged(Id, State);
-        _autoRetractTimer.Stop();
+        StopAutoRetractTimer();
     }
 
-    private void SetState(GapFillerState state) => State = state;
+    private void SetState(GapFillerState state)
+    {
+        State = state;
+        _notifier.NotifyGapFillerStateChanged(Id, State);
+    }
+
     private void RaiseTimedOut() => TimedOut?.Invoke();
 }

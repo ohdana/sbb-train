@@ -117,6 +117,7 @@ public class TrainExitSide : ITrainExitSide
         try
         {
             await _door.CloseAsync();
+            _gapFiller.ResetAutoRetractTimer();
         }
         catch (Exception exception)
         {
@@ -125,7 +126,15 @@ public class TrainExitSide : ITrainExitSide
     }
 
     private void HandleDoorBusy() => _doorIndicator.OnEventReceived(EventType.DoorBusy);
-    private void HandleDoorIdle() => _doorIndicator.OnEventReceived(EventType.DoorIdle);
+    private void HandleDoorIdle()
+    {
+        if (_door.State == DoorState.Opened)
+        {
+            _gapFiller.StopAutoRetractTimer();
+        }
+        
+        _doorIndicator.OnEventReceived(EventType.DoorIdle);
+    }
 
     private void RaiseButtonNotificationRequested(EventType eventType) => ButtonNotificationRequested?.Invoke(eventType);
 }

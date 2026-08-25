@@ -218,6 +218,59 @@ public class TrainExitIntegrationTests
         Assert.Equal(ButtonState.Busy, capturedButtonState);
     }
 
+    [Theory]
+    [InlineData(TrainSideType.A)]
+    [InlineData(TrainSideType.B)]
+    public async Task TrainExit_WhenEnabled_DoorClosedGapFillerRetracted(TrainSideType safeSideType)
+    {
+        // Arrange
+        var (safeSideGraph, otherSideGraph) = GetSideGraphs(safeSideType);
+
+        // Act
+        _graph.Exit.Enable(safeSideType);
+
+        // Assert
+        Assert.Equal(DoorState.Closed, safeSideGraph.Door.State);
+        Assert.Equal(GapFillerState.Retracted, safeSideGraph.GapFiller.State);
+    }
+
+    [Theory]
+    [InlineData(TrainSideType.A)]
+    [InlineData(TrainSideType.B)]
+    public async Task TrainExit_WhenDoorCloses_GapFillerTimerStarts(TrainSideType safeSideType)
+    {
+        // Arrange
+        const int testTimeoutSeconds = 5;
+        var (safeSideGraph, otherSideGraph) = GetSideGraphs(safeSideType);
+        var gapFillerRetracted = WaitUntilGapFillerRetracted(safeSideGraph.GapFiller);
+        
+        _graph.Exit.Enable(safeSideType);
+        await _graph.Exit.OpenAsync();
+
+        // Act
+        safeSideGraph.Door.TimeOut();
+        await gapFillerRetracted.WaitAsync(TimeSpan.FromSeconds(testTimeoutSeconds));
+
+        // Assert
+        Assert.Equal(GapFillerState.Retracted, safeSideGraph.GapFiller.State);
+    }
+
+    private Task WaitUntilGapFillerRetracted(ITrainGapFiller gapFiller)
+    {
+        var tcs = new TaskCompletionSource();
+        _notifier
+            .When(x => x.NotifyGapFillerStateChanged(Arg.Any<Guid>(), Arg.Any<GapFillerState>()))
+            .Do(_ =>
+            {
+                if (gapFiller.State == GapFillerState.Retracted)
+                {
+                    tcs.TrySetResult();
+                }
+            });   
+
+        return tcs.Task;
+    }
+
     private Task WaitUntilButtonsIdle(IEnumerable<IExitButton> buttons)
         => WaitUntilButtonsInState(buttons, ButtonState.Idle);
 

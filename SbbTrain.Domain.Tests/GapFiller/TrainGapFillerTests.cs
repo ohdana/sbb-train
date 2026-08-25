@@ -60,25 +60,28 @@ public class TrainGapFillerTests
     }
 
     [Fact]
-    public async Task GapFiller_WhenExtendCalled_ResetsTimer()
+    public void GapFiller_WhenResetAutoRetractTimerCalled_ResetsTimer()
     {
         // Arrange
+        _gapFiller.StopAutoRetractTimer();
+        _autoRetractTimer.ClearReceivedCalls();
+
         // Act
-        await _gapFiller.ExtendAsync();
+        _gapFiller.ResetAutoRetractTimer();
 
         // Assert
         _autoRetractTimer.Received(1).Reset();
     }
 
     [Fact]
-    public async Task GapFiller_WhenRetractCalled_StopsTimer()
+    public void GapFiller_WhenStopAutoRetractTimerCalled_StopsTimer()
     {
         // Arrange
-        await _gapFiller.ExtendAsync();
+        _gapFiller.ResetAutoRetractTimer();
         _autoRetractTimer.ClearReceivedCalls();
 
         // Act
-        await _gapFiller.RetractAsync();
+        _gapFiller.StopAutoRetractTimer();
 
         // Assert
         _autoRetractTimer.Received(1).Stop();
@@ -96,17 +99,6 @@ public class TrainGapFillerTests
 
         // Assert
         Assert.True(raised);
-    }
-
-    [Fact]
-    public void GapFiller_WhenExitOpenRequested_ResetsTimer()
-    {
-        // Arrange
-        // Act
-        _gapFiller.OnEventReceived(EventType.ExitOpenRequested);
-
-        // Assert
-        _autoRetractTimer.Received(1).Reset();
     }
 
     [Fact]

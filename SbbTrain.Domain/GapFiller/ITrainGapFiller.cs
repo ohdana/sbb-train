@@ -1,7 +1,9 @@
 public interface ITrainGapFiller :
     IGapFiller,
-    IEventReceiver,
     ITimeoutable
 {
     event Action? TimedOut;
+
+    void ResetAutoRetractTimer();
+    void StopAutoRetractTimer();
 }
