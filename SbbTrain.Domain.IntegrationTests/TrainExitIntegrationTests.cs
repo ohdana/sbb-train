@@ -33,7 +33,7 @@ public class TrainExitIntegrationTests
         TrainSideType safeSideType, int buttonIndex)
     {
         // Arrange
-        var (safeSideGraph, otherSideGraph) = GetSideGraphs(safeSideType);
+        var (safeSideGraph, otherSideGraph) = GetSideGraphs(_graph, safeSideType);
         var button = safeSideGraph.Buttons.ElementAt(buttonIndex);
 
         _graph.Exit.Enable(safeSideType);
@@ -51,7 +51,7 @@ public class TrainExitIntegrationTests
         TrainSideType safeSideType, int buttonIndex)
     {
         // Arrange
-        var (safeSideGraph, otherSideGraph) = GetSideGraphs(safeSideType);
+        var (safeSideGraph, otherSideGraph) = GetSideGraphs(_graph, safeSideType);
         var button = otherSideGraph.Buttons.ElementAt(buttonIndex);
 
         _graph.Exit.Enable(safeSideType);
@@ -70,7 +70,7 @@ public class TrainExitIntegrationTests
         TrainSideType safeSideType)
     {
         // Arrange
-        var (safeSideGraph, otherSideGraph) = GetSideGraphs(safeSideType);
+        var (safeSideGraph, otherSideGraph) = GetSideGraphs(_graph, safeSideType);
         var allButtons = safeSideGraph.Buttons.Concat(otherSideGraph.Buttons);
 
         _graph.Exit.Enable(safeSideType);
@@ -88,7 +88,7 @@ public class TrainExitIntegrationTests
         TrainSideType safeSideType, int buttonIndex)
     {
         // Arrange
-        var (safeSideGraph, otherSideGraph) = GetSideGraphs(safeSideType);
+        var (safeSideGraph, otherSideGraph) = GetSideGraphs(_graph, safeSideType);
         var button = safeSideGraph.Buttons.ElementAt(buttonIndex);
         var buttonsIdle = WaitUntilButtonsIdle(new List<IExitButton> { button });
 
@@ -110,7 +110,7 @@ public class TrainExitIntegrationTests
         TrainSideType safeSideType)
     {
         // Arrange
-        var (safeSideGraph, otherSideGraph) = GetSideGraphs(safeSideType);
+        var (safeSideGraph, otherSideGraph) = GetSideGraphs(_graph, safeSideType);
         var allButtons = safeSideGraph.Buttons.Concat(otherSideGraph.Buttons);
         var buttonsIdle = WaitUntilButtonsIdle(allButtons);
 
@@ -131,7 +131,7 @@ public class TrainExitIntegrationTests
         TrainSideType safeSideType, int buttonIndex)
     {
         // Arrange
-        var (oneSideGraph, otherSideGraph) = GetSideGraphs(safeSideType);
+        var (oneSideGraph, otherSideGraph) = GetSideGraphs(_graph, safeSideType);
         var button = oneSideGraph.Buttons.ElementAt(buttonIndex);
         var allButtons = oneSideGraph.Buttons.Concat(otherSideGraph.Buttons);
         var buttonsActive = WaitUntilButtonsActive(allButtons);
@@ -155,7 +155,7 @@ public class TrainExitIntegrationTests
     public async Task TrainExit_WhenDoorOpening_DoorIndicatorAndButtonsBusy(TrainSideType safeSideType)
     {
         // Arrange
-        var (safeSideGraph, otherSideGraph) = GetSideGraphs(safeSideType);
+        var (safeSideGraph, otherSideGraph) = GetSideGraphs(_graph, safeSideType);
         var allButtons = safeSideGraph.Buttons.Concat(otherSideGraph.Buttons);
 
         _graph.Exit.Enable(safeSideType);
@@ -189,7 +189,7 @@ public class TrainExitIntegrationTests
     public async Task TrainExit_WhenDoorClosing_DoorIndicatorAndButtonsBusy(TrainSideType safeSideType)
     {
         // Arrange
-        var (safeSideGraph, otherSideGraph) = GetSideGraphs(safeSideType);
+        var (safeSideGraph, otherSideGraph) = GetSideGraphs(_graph, safeSideType);
         var allButtons = safeSideGraph.Buttons.Concat(otherSideGraph.Buttons);
 
         DoorIndicatorState? capturedIndicatorState  = null;
@@ -224,7 +224,7 @@ public class TrainExitIntegrationTests
     public async Task TrainExit_WhenEnabled_DoorClosedGapFillerRetracted(TrainSideType safeSideType)
     {
         // Arrange
-        var (safeSideGraph, otherSideGraph) = GetSideGraphs(safeSideType);
+        var (safeSideGraph, otherSideGraph) = GetSideGraphs(_graph, safeSideType);
 
         // Act
         _graph.Exit.Enable(safeSideType);
@@ -237,22 +237,24 @@ public class TrainExitIntegrationTests
     [Theory]
     [InlineData(TrainSideType.A)]
     [InlineData(TrainSideType.B)]
-    public async Task TrainExit_WhenDoorCloses_GapFillerTimerStarts(TrainSideType safeSideType)
+    public async Task TrainExit_WhenDoorCloses_GapFillerTimerResets(TrainSideType safeSideType)
     {
         // Arrange
-        const int testTimeoutSeconds = 5;
-        var (safeSideGraph, otherSideGraph) = GetSideGraphs(safeSideType);
-        var gapFillerRetracted = WaitUntilGapFillerRetracted(safeSideGraph.GapFiller);
-        
-        _graph.Exit.Enable(safeSideType);
-        await _graph.Exit.OpenAsync();
+        var graph = new TrainExitTestGraphBuilder()
+            .WithMockGapFillerA(Substitute.For<ITrainGapFiller>())
+            .WithMockGapFillerB(Substitute.For<ITrainGapFiller>())
+            .Build();
+        var (safeSideGraph, otherSideGraph) = GetSideGraphs(graph, safeSideType);
+
+        graph.Exit.Enable(safeSideType);
+        await graph.Exit.OpenAsync();
+        safeSideGraph.GapFiller.ClearReceivedCalls();
 
         // Act
         safeSideGraph.Door.TimeOut();
-        await gapFillerRetracted.WaitAsync(TimeSpan.FromSeconds(testTimeoutSeconds));
 
         // Assert
-        Assert.Equal(GapFillerState.Retracted, safeSideGraph.GapFiller.State);
+        safeSideGraph.GapFiller.Received(1).ResetAutoRetractTimer();
     }
 
     private Task WaitUntilGapFillerRetracted(ITrainGapFiller gapFiller)
@@ -307,10 +309,10 @@ public class TrainExitIntegrationTests
         await Task.WhenAll(buttonsPressed);
     }
 
-    private (TrainExitSideTestGraph, TrainExitSideTestGraph) GetSideGraphs(TrainSideType safeSideType)
+    private (TrainExitSideTestGraph, TrainExitSideTestGraph) GetSideGraphs(TrainExitTestGraph graph, TrainSideType safeSideType)
     {
         return safeSideType == TrainSideType.A ?
-            (_graph.SideA, _graph.SideB) : (_graph.SideB, _graph.SideA);
+            (graph.SideA, graph.SideB) : (graph.SideB, graph.SideA);
     }
 
     private (IExitDoorMechanism, IExitDoorMechanism) GetDoorMechanisms(TrainSideType safeSideType)
