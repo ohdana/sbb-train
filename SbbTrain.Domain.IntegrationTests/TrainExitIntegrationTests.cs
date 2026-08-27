@@ -257,6 +257,30 @@ public class TrainExitIntegrationTests
         safeSideGraph.GapFiller.Received(1).ResetAutoRetractTimer();
     }
 
+    [Theory]
+    [InlineData(TrainSideType.A)]
+    [InlineData(TrainSideType.B)]
+    public async Task TrainExit_WhenDoorOpens_GapFillerTimerStops(TrainSideType safeSideType)
+    {
+        // Arrange
+        var graph = new TrainExitTestGraphBuilder()
+            .WithMockGapFillerA(Substitute.For<ITrainGapFiller>())
+            .WithMockGapFillerB(Substitute.For<ITrainGapFiller>())
+            .Build();
+        var (safeSideGraph, otherSideGraph) = GetSideGraphs(graph, safeSideType);
+
+        graph.Exit.Enable(safeSideType);
+        await graph.Exit.OpenAsync();
+        await safeSideGraph.Door.CloseAsync();
+        safeSideGraph.GapFiller.ClearReceivedCalls();
+
+        // Act
+        await safeSideGraph.Door.OpenAsync();
+
+        // Assert
+        safeSideGraph.GapFiller.Received(1).StopAutoRetractTimer();
+    }
+
     private Task WaitUntilGapFillerRetracted(ITrainGapFiller gapFiller)
     {
         var tcs = new TaskCompletionSource();
