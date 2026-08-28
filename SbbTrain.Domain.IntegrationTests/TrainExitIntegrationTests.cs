@@ -42,7 +42,7 @@ public class TrainExitIntegrationTests
         await PressButtonsAndWaitUntilIdle(new List<IExitButton> { button });
 
         // Assert
-        AssertSafeSideOpenedAndAllButtonsIdle(safeSideGraph, otherSideGraph);
+        AssertOnlySafeSideOpenedAndAllButtonsIdle(safeSideGraph, otherSideGraph);
     }
 
     [Theory]
@@ -60,7 +60,7 @@ public class TrainExitIntegrationTests
         await PressButtonsAndWaitUntilIdle(new List<IExitButton> { button });
 
         // Assert
-        AssertSafeSideOpenedAndAllButtonsIdle(safeSideGraph, otherSideGraph);
+        AssertOnlySafeSideOpenedAndAllButtonsIdle(safeSideGraph, otherSideGraph);
     }
 
     [Theory]
@@ -79,7 +79,7 @@ public class TrainExitIntegrationTests
         await PressButtonsAndWaitUntilIdle(allButtons);
 
         // Assert
-        AssertSafeSideOpenedAndAllButtonsIdle(safeSideGraph, otherSideGraph);
+        AssertOnlySafeSideOpenedAndAllButtonsIdle(safeSideGraph, otherSideGraph);
     }
 
     [Theory]
@@ -100,7 +100,28 @@ public class TrainExitIntegrationTests
         await buttonsIdle.WaitAsync(TimeSpan.FromSeconds(BUTTONS_IDLE_TIMEOUT_SECONDS));
 
         // Assert
-        AssertSafeSideOpenedAndAllButtonsIdle(safeSideGraph, otherSideGraph);
+        AssertOnlySafeSideOpenedAndAllButtonsIdle(safeSideGraph, otherSideGraph);
+    }
+
+    [Theory]
+    [MemberData(nameof(SafeSideTypeAndButtonIndexCombinations))]
+    public async Task TrainExit_WhenDisabledThenButtonPressedOnUnsafeSideThenEnabled_GapFillerExtendedAndDoorOpenedAndButtonsIdleOnSafeSide(
+        TrainSideType safeSideType, int buttonIndex)
+    {
+        // Arrange
+        var (safeSideGraph, otherSideGraph) = GetSideGraphs(_graph, safeSideType);
+        var button = otherSideGraph.Buttons.ElementAt(buttonIndex);
+        var buttonsIdle = WaitUntilButtonsIdle(new List<IExitButton> { button });
+
+        _graph.Exit.Disable();
+        button.Press();
+
+        // Act
+        _graph.Exit.Enable(safeSideType);
+        await buttonsIdle.WaitAsync(TimeSpan.FromSeconds(BUTTONS_IDLE_TIMEOUT_SECONDS));
+
+        // Assert
+        AssertOnlySafeSideOpenedAndAllButtonsIdle(safeSideGraph, otherSideGraph);
     }
 
     [Theory]
@@ -122,13 +143,12 @@ public class TrainExitIntegrationTests
         await buttonsIdle.WaitAsync(TimeSpan.FromSeconds(BUTTONS_IDLE_TIMEOUT_SECONDS));
 
         // Assert
-        AssertSafeSideOpenedAndAllButtonsIdle(safeSideGraph, otherSideGraph);
+        AssertOnlySafeSideOpenedAndAllButtonsIdle(safeSideGraph, otherSideGraph);
     }
 
     [Theory]
     [MemberData(nameof(SafeSideTypeAndButtonIndexCombinations))]
-    public async Task TrainExit_WhenDisabledThenButtonPressed_AllButtonsActive(
-        TrainSideType safeSideType, int buttonIndex)
+    public async Task TrainExit_WhenDisabledThenButtonPressed_AllButtonsActive(TrainSideType safeSideType, int buttonIndex)
     {
         // Arrange
         var (oneSideGraph, otherSideGraph) = GetSideGraphs(_graph, safeSideType);
@@ -281,6 +301,26 @@ public class TrainExitIntegrationTests
         safeSideGraph.GapFiller.Received(1).StopAutoRetractTimer();
     }
 
+    [Theory]
+    [InlineData(TrainSideType.A)]
+    [InlineData(TrainSideType.B)]
+    public async Task TrainExit_WhenExitCloseCalled_DoorClosedGapFillerRetractedButtonsIdle(TrainSideType safeSideType)
+    {
+        // Arrange
+        var (safeSideGraph, otherSideGraph) = GetSideGraphs(_graph, safeSideType);
+        var allButtons = safeSideGraph.Buttons.Concat(otherSideGraph.Buttons);
+        var buttonsIdle = WaitUntilButtonsIdle(allButtons);
+        _graph.Exit.Enable(safeSideType);
+        await _graph.Exit.OpenAsync();
+
+        // Act
+        await _graph.Exit.CloseAsync();
+        await buttonsIdle.WaitAsync(TimeSpan.FromSeconds(BUTTONS_IDLE_TIMEOUT_SECONDS));
+
+        // Assert
+        AssertBothSidesClosedAndAllButtonsIdle(safeSideGraph, otherSideGraph);
+    }
+
     private Task WaitUntilButtonsIdle(IEnumerable<IExitButton> buttons)
         => WaitUntilButtonsInState(buttons, ButtonState.Idle);
 
@@ -343,7 +383,7 @@ public class TrainExitIntegrationTests
         }
     }
 
-    private void AssertSafeSideOpenedAndAllButtonsIdle(
+    private void AssertOnlySafeSideOpenedAndAllButtonsIdle(
         TrainExitSideTestGraph safeSideGraph, TrainExitSideTestGraph otherSideGraph)
     {
         Assert.Equal(DoorState.Opened, safeSideGraph.Door.State);
@@ -353,7 +393,25 @@ public class TrainExitIntegrationTests
         Assert.Equal(GapFillerState.Retracted, otherSideGraph.GapFiller.State);
 
         var allButtons = safeSideGraph.Buttons.Concat(otherSideGraph.Buttons);
-        foreach (var button in allButtons)
+        AssertButtonsIdle(allButtons);
+    }
+
+    private void AssertBothSidesClosedAndAllButtonsIdle(
+        TrainExitSideTestGraph safeSideGraph, TrainExitSideTestGraph otherSideGraph)
+    {
+        Assert.Equal(DoorState.Closed, safeSideGraph.Door.State);
+        Assert.Equal(DoorState.Closed, otherSideGraph.Door.State);
+
+        Assert.Equal(GapFillerState.Retracted, safeSideGraph.GapFiller.State);
+        Assert.Equal(GapFillerState.Retracted, otherSideGraph.GapFiller.State);
+
+        var allButtons = safeSideGraph.Buttons.Concat(otherSideGraph.Buttons);
+        AssertButtonsIdle(allButtons);
+    }
+
+    private void AssertButtonsIdle(IEnumerable<IExitButton> buttons)
+    {
+        foreach (var button in buttons)
         {
             Assert.Equal(ButtonState.Idle, button.State);   
         }
