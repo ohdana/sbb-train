@@ -15,13 +15,15 @@ public class TrainExitTestGraphBuilder
 
     private ITrainGapFiller? _mockGapFillerA;
     private ITrainGapFiller? _mockGapFillerB;
+    private IExitDoor? _mockDoorA;
+    private IExitDoor? _mockDoorB;
 
     public TrainExitTestGraph Build()
     {
         var timerFactory = new TimeoutTimerFactory();
 
-        var sideA = BuildSide(TrainSideType.A, _doorMechanismA, _gapFillerMechanismA, _mockGapFillerA, timerFactory);
-        var sideB = BuildSide(TrainSideType.B, _doorMechanismB, _gapFillerMechanismB, _mockGapFillerB, timerFactory);
+        var sideA = BuildSide(TrainSideType.A, _doorMechanismA, _gapFillerMechanismA, _mockGapFillerA, _mockDoorA, timerFactory);
+        var sideB = BuildSide(TrainSideType.B, _doorMechanismB, _gapFillerMechanismB, _mockGapFillerB, _mockDoorB, timerFactory);
 
         var exit = new TrainExit(Guid.NewGuid(), sideA.Side, sideB.Side, _notifier);
         _ = new PendingOpenRequestResolver(exit, _logger);
@@ -33,39 +35,15 @@ public class TrainExitTestGraphBuilder
         );
     }
 
-    public TrainExitTestGraphBuilder WithDoorMechanismA(IExitDoorMechanism mechanism)
+    public TrainExitTestGraphBuilder WithMockDoorA(IExitDoor door)
     {
-        _doorMechanismA = mechanism;
+        _mockDoorA = door;
         return this;
     }
 
-    public TrainExitTestGraphBuilder WithDoorMechanismB(IExitDoorMechanism mechanism)
+    public TrainExitTestGraphBuilder WithMockDoorB(IExitDoor door)
     {
-        _doorMechanismB = mechanism;
-        return this;
-    }
-
-    public TrainExitTestGraphBuilder WithGapFillerMechanismA(IGapFillerMechanism mechanism)
-    {
-        _gapFillerMechanismA = mechanism;
-        return this;
-    }
-
-    public TrainExitTestGraphBuilder WithGapFillerMechanismB(IGapFillerMechanism mechanism)
-    {
-        _gapFillerMechanismB = mechanism;
-        return this;
-    }
-
-    public TrainExitTestGraphBuilder WithNotifier(ITrainNotifier notifier)
-    {
-        _notifier = notifier;
-        return this;
-    }
-
-    public TrainExitTestGraphBuilder WithLogger(ITrainLogger logger)
-    {
-        _logger = logger;
+        _mockDoorB = door;
         return this;
     }
 
@@ -86,9 +64,11 @@ public class TrainExitTestGraphBuilder
             IExitDoorMechanism doorMechanism,
             IGapFillerMechanism gapFillerMechanism,
             ITrainGapFiller? mockGapFiller,
+            IExitDoor? mockDoor,
             ITimeoutTimerFactory timerFactory)
     {
-        var door = new ExitDoor(Guid.NewGuid(), timerFactory, AutoCloseTimerDuration, doorMechanism, _notifier);
+        var door = mockDoor
+            ?? new ExitDoor(Guid.NewGuid(), timerFactory, AutoCloseTimerDuration, doorMechanism, _notifier);
         var doorIndicator = new DoorIndicator(Guid.NewGuid(), _notifier);
         var gapFiller = mockGapFiller 
             ?? new TrainGapFiller(Guid.NewGuid(), timerFactory, AutoRetractTimerDuration, gapFillerMechanism, _notifier);
