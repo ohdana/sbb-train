@@ -15,15 +15,13 @@ public class TrainExitTestGraphBuilder
 
     private ITrainGapFiller? _mockGapFillerA;
     private ITrainGapFiller? _mockGapFillerB;
-    private IExitDoor? _mockDoorA;
-    private IExitDoor? _mockDoorB;
 
     public TrainExitTestGraph Build()
     {
         var timerFactory = new TimeoutTimerFactory();
 
-        var sideA = BuildSide(TrainSideType.A, _doorMechanismA, _gapFillerMechanismA, _mockGapFillerA, _mockDoorA, timerFactory);
-        var sideB = BuildSide(TrainSideType.B, _doorMechanismB, _gapFillerMechanismB, _mockGapFillerB, _mockDoorB, timerFactory);
+        var sideA = BuildSide(TrainSideType.A, _doorMechanismA, _gapFillerMechanismA, _mockGapFillerA, timerFactory);
+        var sideB = BuildSide(TrainSideType.B, _doorMechanismB, _gapFillerMechanismB, _mockGapFillerB, timerFactory);
 
         var exit = new TrainExit(Guid.NewGuid(), sideA.Side, sideB.Side, _notifier);
         _ = new PendingOpenRequestResolver(exit, _logger);
@@ -33,18 +31,6 @@ public class TrainExitTestGraphBuilder
             new TrainExitSideTestGraph(sideA.Side, sideA.Door, sideA.DoorIndicator, sideA.GapFiller, sideA.Buttons),
             new TrainExitSideTestGraph(sideB.Side, sideB.Door, sideB.DoorIndicator, sideB.GapFiller, sideB.Buttons)
         );
-    }
-
-    public TrainExitTestGraphBuilder WithMockDoorA(IExitDoor door)
-    {
-        _mockDoorA = door;
-        return this;
-    }
-
-    public TrainExitTestGraphBuilder WithMockDoorB(IExitDoor door)
-    {
-        _mockDoorB = door;
-        return this;
     }
 
     public TrainExitTestGraphBuilder WithMockGapFillerA(ITrainGapFiller gapFiller)
@@ -64,11 +50,9 @@ public class TrainExitTestGraphBuilder
             IExitDoorMechanism doorMechanism,
             IGapFillerMechanism gapFillerMechanism,
             ITrainGapFiller? mockGapFiller,
-            IExitDoor? mockDoor,
             ITimeoutTimerFactory timerFactory)
     {
-        var door = mockDoor
-            ?? new ExitDoor(Guid.NewGuid(), timerFactory, AutoCloseTimerDuration, doorMechanism, _notifier);
+        var door = new ExitDoor(Guid.NewGuid(), timerFactory, AutoCloseTimerDuration, doorMechanism, _notifier);
         var doorIndicator = new DoorIndicator(Guid.NewGuid(), _notifier);
         var gapFiller = mockGapFiller 
             ?? new TrainGapFiller(Guid.NewGuid(), timerFactory, AutoRetractTimerDuration, gapFillerMechanism, _notifier);

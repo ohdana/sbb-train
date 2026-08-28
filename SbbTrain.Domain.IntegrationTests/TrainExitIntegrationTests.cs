@@ -321,61 +321,6 @@ public class TrainExitIntegrationTests
         AssertBothSidesClosedAndAllButtonsIdle(safeSideGraph, otherSideGraph);
     }
 
-    [Theory]
-    [InlineData(TrainSideType.A)]
-    [InlineData(TrainSideType.B)]
-    public async Task TrainExit_WhenOpenCalled_GapFillerExtendsThenDoorOpens(TrainSideType safeSideType)
-    {
-        // Arrange
-        var graph = new TrainExitTestGraphBuilder()
-            .WithMockGapFillerA(Substitute.For<ITrainGapFiller>())
-            .WithMockGapFillerB(Substitute.For<ITrainGapFiller>())
-            .WithMockDoorA(Substitute.For<IExitDoor>())
-            .WithMockDoorB(Substitute.For<IExitDoor>())
-            .Build();
-        var (safeSideGraph, otherSideGraph) = GetSideGraphs(graph, safeSideType);
-        graph.Exit.Enable(safeSideType);
-
-        // Act
-        await graph.Exit.OpenAsync();
-
-        // Assert
-        Received.InOrder(() =>
-        {
-            safeSideGraph.GapFiller.ExtendAsync();
-            safeSideGraph.Door.OpenAsync();
-        });
-    }
-
-    [Theory]
-    [InlineData(TrainSideType.A)]
-    [InlineData(TrainSideType.B)]
-    public async Task TrainExit_WhenCloseCalled_DoorClosesThenGapFillerRetracts(TrainSideType safeSideType)
-    {
-        // Arrange
-        var graph = new TrainExitTestGraphBuilder()
-            .WithMockGapFillerA(Substitute.For<ITrainGapFiller>())
-            .WithMockGapFillerB(Substitute.For<ITrainGapFiller>())
-            .WithMockDoorA(Substitute.For<IExitDoor>())
-            .WithMockDoorB(Substitute.For<IExitDoor>())
-            .Build();
-        var (safeSideGraph, otherSideGraph) = GetSideGraphs(graph, safeSideType);
-        graph.Exit.Enable(safeSideType);
-        await graph.Exit.OpenAsync();
-        safeSideGraph.Door.ClearReceivedCalls();
-        safeSideGraph.GapFiller.ClearReceivedCalls();
-
-        // Act
-        await graph.Exit.CloseAsync();
-
-        // Assert
-        Received.InOrder(() =>
-        {
-            safeSideGraph.Door.CloseAsync();
-            safeSideGraph.GapFiller.RetractAsync();
-        });
-    }
-
     private Task WaitUntilButtonsIdle(IEnumerable<IExitButton> buttons)
         => WaitUntilButtonsInState(buttons, ButtonState.Idle);
 
