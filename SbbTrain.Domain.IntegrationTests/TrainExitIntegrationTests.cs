@@ -281,22 +281,6 @@ public class TrainExitIntegrationTests
         safeSideGraph.GapFiller.Received(1).StopAutoRetractTimer();
     }
 
-    private Task WaitUntilGapFillerRetracted(ITrainGapFiller gapFiller)
-    {
-        var tcs = new TaskCompletionSource();
-        _notifier
-            .When(x => x.NotifyGapFillerStateChanged(Arg.Any<Guid>(), Arg.Any<GapFillerState>()))
-            .Do(_ =>
-            {
-                if (gapFiller.State == GapFillerState.Retracted)
-                {
-                    tcs.TrySetResult();
-                }
-            });   
-
-        return tcs.Task;
-    }
-
     private Task WaitUntilButtonsIdle(IEnumerable<IExitButton> buttons)
         => WaitUntilButtonsInState(buttons, ButtonState.Idle);
 
