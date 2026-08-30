@@ -11,6 +11,8 @@ public class TrainExit : ITrainExit
     private readonly ITrainExitSide _sideB;
     private ITrainExitSide? _safeSide;
 
+    private bool _isForceClosing;
+
     public TrainExit(Guid id, ITrainExitSide sideA, ITrainExitSide sideB, ITrainExitNotifier notifier)
     {
         Id = id;
@@ -18,6 +20,7 @@ public class TrainExit : ITrainExit
         _sideA = sideA;
         _sideB = sideB;
         _notifier = notifier;
+        _isForceClosing = false;
 
         _sideA.OpenRequested += OnOpenRequested;
         _sideB.OpenRequested += OnOpenRequested;
@@ -63,6 +66,7 @@ public class TrainExit : ITrainExit
             return;
         }
 
+        _isForceClosing = true;
         try
         {
             await _safeSide.CloseAsync();
@@ -71,6 +75,10 @@ public class TrainExit : ITrainExit
         {
             HandleTrainExitSideException();
             throw;
+        }
+        finally
+        {
+            _isForceClosing = false;
         }
     }
 
@@ -81,7 +89,15 @@ public class TrainExit : ITrainExit
         _notifier.NotifyTrainExitStateChanged(Id, State);
     }
 
-    private void OnOpenRequested() => RaiseOpenRequested();
+    private void OnOpenRequested()
+    {
+        if (_isForceClosing)
+        {
+            return;
+        }
+        
+        RaiseOpenRequested();
+    }
 
     private void OnButtonNotificationRequested(EventType eventType)
     {
