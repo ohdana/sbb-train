@@ -321,6 +321,35 @@ public class TrainExitIntegrationTests
         AssertBothSidesClosedAndAllButtonsIdle(safeSideGraph, otherSideGraph);
     }
 
+    [Theory]
+    [InlineData(TrainSideType.A)]
+    [InlineData(TrainSideType.B)]
+    public async Task TrainExit_WhenExitCloseCalledAndButtonPressed_DoesNotReopenDoor(TrainSideType safeSideType)
+    {
+        // Arrange
+        _doorMechanismA.CloseAsync(Arg.Any<CancellationToken>()).Returns(async _ => await Task.Delay(200));
+        _doorMechanismB.CloseAsync(Arg.Any<CancellationToken>()).Returns(async _ => await Task.Delay(200));
+
+        var (safeSideGraph, otherSideGraph) = GetSideGraphs(_graph, safeSideType);
+        var allButtons = safeSideGraph.Buttons.Concat(otherSideGraph.Buttons);
+
+        _graph.Exit.Enable(safeSideType);
+        await _graph.Exit.OpenAsync();
+        _doorMechanismA.ClearReceivedCalls();
+        _doorMechanismB.ClearReceivedCalls();
+
+        // Act
+        var closeExitTask = _graph.Exit.CloseAsync();
+        await Task.Delay(50); // headstart for the closeExitTask
+
+        var pressTask = allButtons.Select(button => Task.Run(() => button.Press())).ToArray();
+        await Task.WhenAll(pressTask.Append(closeExitTask));
+        
+        // Assert
+        await _doorMechanismA.DidNotReceive().OpenAsync();
+        await _doorMechanismB.DidNotReceive().OpenAsync();
+    }
+
     private Task WaitUntilButtonsIdle(IEnumerable<IExitButton> buttons)
         => WaitUntilButtonsInState(buttons, ButtonState.Idle);
 

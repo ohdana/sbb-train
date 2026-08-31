@@ -94,6 +94,7 @@ public class ExitButtonTests
             new object[] { EventType.ExitOpenRequested, ButtonState.Active },
             new object[] { EventType.DoorBusy, ButtonState.Busy },
             new object[] { EventType.DoorIdle, ButtonState.Idle },
-            new object[] { EventType.DoorDisabled, ButtonState.Disabled },
+            new object[] { EventType.ExitForceClosing, ButtonState.Disabled },
+            new object[] { EventType.ExitForceClosed, ButtonState.Idle },
         };
 }

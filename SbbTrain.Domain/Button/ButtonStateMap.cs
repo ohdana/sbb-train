@@ -6,7 +6,8 @@ public class ButtonStateMap
         { EventType.ExitOpenRequested, ButtonState.Active },
         { EventType.DoorBusy, ButtonState.Busy },
         { EventType.DoorIdle, ButtonState.Idle },
-        { EventType.DoorDisabled, ButtonState.Disabled }
+        { EventType.ExitForceClosing, ButtonState.Disabled },
+        { EventType.ExitForceClosed, ButtonState.Idle }
     };
 
     public static ButtonState GetStateByEvent(EventType eventType) 

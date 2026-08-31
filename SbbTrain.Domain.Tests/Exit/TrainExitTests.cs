@@ -28,7 +28,8 @@ public class TrainExitTests
     }
 
     [Theory]
-    [MemberData(nameof(TrainSideTypes))]
+    [InlineData(TrainSideType.A)]
+    [InlineData(TrainSideType.B)]
     public void TrainExit_WhenEnableCalledWithValidSideType_BecomesEnabled(TrainSideType sideType)
     {
         // Arrange
@@ -56,7 +57,8 @@ public class TrainExitTests
     }
 
     [Theory]
-    [MemberData(nameof(TrainSideTypes))]
+    [InlineData(TrainSideType.A)]
+    [InlineData(TrainSideType.B)]
     public void TrainExit_WhenDisableCalled_BecomesDisabled(TrainSideType sideType)
     {
         // Arrange
@@ -70,7 +72,8 @@ public class TrainExitTests
     }
 
     [Theory]
-    [MemberData(nameof(TrainSideTypes))]
+    [InlineData(TrainSideType.A)]
+    [InlineData(TrainSideType.B)]
     public async Task TrainExit_WhenEnabledAndOpenCalled_OpensSafeSide(TrainSideType sideType)
     {
         // Arrange
@@ -98,7 +101,8 @@ public class TrainExitTests
     }
 
     [Theory]
-    [MemberData(nameof(TrainSideTypes))]
+    [InlineData(TrainSideType.A)]
+    [InlineData(TrainSideType.B)]
     public async Task TrainExit_WhenCloseCalled_ClosesSafeSide(TrainSideType sideType)
     {
         // Arrange
@@ -116,7 +120,34 @@ public class TrainExitTests
     }
 
     [Theory]
-    [MemberData(nameof(TrainSideTypes))]
+    [InlineData(TrainSideType.A)]
+    [InlineData(TrainSideType.B)]
+    public async Task TrainExit_WhenCloseCalled_NotifiesAllButtons(TrainSideType sideType)
+    {
+        // Arrange
+        var (safeSide, anotherSide) = GetSides(sideType);
+        _exit.Enable(sideType);
+        await _exit.OpenAsync();
+
+        // Act
+        await _exit.CloseAsync();
+
+        // Assert
+        Received.InOrder(() =>
+        {
+            safeSide.HandleButtonNotificationRequest(EventType.ExitForceClosing);
+            safeSide.HandleButtonNotificationRequest(EventType.ExitForceClosed);
+        });
+        Received.InOrder(() =>
+        {
+            anotherSide.HandleButtonNotificationRequest(EventType.ExitForceClosing);
+            anotherSide.HandleButtonNotificationRequest(EventType.ExitForceClosed);
+        });
+    }
+
+    [Theory]
+    [InlineData(TrainSideType.A)]
+    [InlineData(TrainSideType.B)]
     public async Task TrainExit_WhenSideThrowsExceptionOnOpen_BecomesFaultedAndRethrows(
         TrainSideType sideType)
     {
@@ -138,7 +169,8 @@ public class TrainExitTests
     }
 
     [Theory]
-    [MemberData(nameof(TrainSideTypes))]
+    [InlineData(TrainSideType.A)]
+    [InlineData(TrainSideType.B)]
     public async Task TrainExit_WhenSideThrowsExceptionOnClose_BecomesFaultedAndRethrows(
         TrainSideType sideType)
     {
@@ -162,11 +194,4 @@ public class TrainExitTests
 
     private (ITrainExitSide safeSide, ITrainExitSide anotherSide) GetSides(TrainSideType sideType) =>
         sideType == TrainSideType.A ? (_sideA, _sideB) : (_sideB, _sideA);
-
-    public static IEnumerable<object[]> TrainSideTypes =>
-        new List<object[]>
-        {
-            new object[] { TrainSideType.A },
-            new object[] { TrainSideType.B }
-        };
 }

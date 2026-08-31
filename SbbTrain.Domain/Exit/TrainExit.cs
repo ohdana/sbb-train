@@ -69,6 +69,7 @@ public class TrainExit : ITrainExit
         _isForceClosing = true;
         try
         {
+            OnButtonNotificationRequested(EventType.ExitForceClosing);
             await _safeSide.CloseAsync();
         }
         catch
@@ -79,6 +80,7 @@ public class TrainExit : ITrainExit
         finally
         {
             _isForceClosing = false;
+            OnButtonNotificationRequested(EventType.ExitForceClosed);
         }
     }
 
@@ -95,7 +97,7 @@ public class TrainExit : ITrainExit
         {
             return;
         }
-        
+
         RaiseOpenRequested();
     }
 
