@@ -2,7 +2,7 @@ using NSubstitute;
 
 public class TrainExitTestGraphBuilder
 {
-    private const int NOfButtonsPerSide = 5;
+    public const int NOfButtonsPerSide = 3;
     private static readonly TimeSpan AutoCloseTimerDuration = TimeSpan.FromSeconds(30);
     private static readonly TimeSpan AutoRetractTimerDuration = TimeSpan.FromSeconds(300);
 
@@ -33,18 +33,19 @@ public class TrainExitTestGraphBuilder
         );
     }
 
-    public TrainExitTestGraphBuilder WithMockGapFillerA(ITrainGapFiller gapFiller)
-    {
-        _mockGapFillerA = gapFiller;
-        return this;
-    }
+    public TrainExitTestGraphBuilder WithMockGapFillerA(ITrainGapFiller gapFiller) { _mockGapFillerA = gapFiller; return this; }
+    public TrainExitTestGraphBuilder WithMockGapFillerB(ITrainGapFiller gapFiller){ _mockGapFillerB = gapFiller; return this; }
 
-    public TrainExitTestGraphBuilder WithMockGapFillerB(ITrainGapFiller gapFiller)
-    {
-        _mockGapFillerB = gapFiller;
-        return this;
-    }
+    public TrainExitTestGraphBuilder WithDoorMechanismA(IExitDoorMechanism mechanism){ _doorMechanismA = mechanism; return this; }
+    public TrainExitTestGraphBuilder WithDoorMechanismB(IExitDoorMechanism mechanism){ _doorMechanismB = mechanism; return this; }
 
+    public TrainExitTestGraphBuilder WithGapFillerMechanismA(IGapFillerMechanism mechanism){ _gapFillerMechanismA = mechanism; return this; }
+    public TrainExitTestGraphBuilder WithGapFillerMechanismB(IGapFillerMechanism mechanism){ _gapFillerMechanismB = mechanism; return this; }
+
+    public TrainExitTestGraphBuilder WithNotifier(ITrainNotifier notifier) { _notifier = notifier; return this; }
+    
+    public TrainExitTestGraphBuilder WithLogger(ITrainLogger logger) { _logger = logger; return this; }
+    
     private (ITrainExitSide Side, IExitDoor Door, IDoorIndicator DoorIndicator, ITrainGapFiller GapFiller, IReadOnlyList<IExitButton> Buttons) BuildSide(
             TrainSideType sideType,
             IExitDoorMechanism doorMechanism,

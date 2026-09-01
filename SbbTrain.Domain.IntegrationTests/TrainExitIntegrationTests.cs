@@ -21,10 +21,15 @@ public class TrainExitIntegrationTests
         _notifier = Substitute.For<ITrainNotifier>();
         _logger = Substitute.For<ITrainLogger>();
 
-        _graph = TestCompositionRoot.CreateTrainExit(
-            _doorMechanismA, _doorMechanismB,
-            _gapFillerMechanismA, _gapFillerMechanismB,
-            _notifier, _logger);
+        _graph = new TrainExitTestGraphBuilder()
+            .WithDoorMechanismA(_doorMechanismA)
+            .WithDoorMechanismB(_doorMechanismB)
+            .WithGapFillerMechanismA(_gapFillerMechanismA)
+            .WithGapFillerMechanismB(_gapFillerMechanismB)
+            .WithNotifier(_notifier)
+            .WithLogger(_logger)
+            .Build();
+
     }
 
     [Theory]
@@ -415,7 +420,7 @@ public class TrainExitIntegrationTests
     public static IEnumerable<object[]> SafeSideTypeAndButtonIndexCombinations()
     {
         var sideTypes = Enum.GetValues<TrainSideType>();
-        var nOfButtons = TestCompositionRoot.NOfButtonsPerSide;
+        var nOfButtons = TrainExitTestGraphBuilder.NOfButtonsPerSide;
 
         foreach (var sideType in sideTypes)
         {
