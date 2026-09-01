@@ -327,23 +327,15 @@ public class TrainExitIntegrationTests
     public async Task TrainExit_WhenExitCloseCalledAndButtonPressed_DoesNotReopenDoor(TrainSideType safeSideType)
     {
         // Arrange
-        _doorMechanismA.CloseAsync(Arg.Any<CancellationToken>()).Returns(async _ => await Task.Delay(200));
-        _doorMechanismB.CloseAsync(Arg.Any<CancellationToken>()).Returns(async _ => await Task.Delay(200));
-
-        var (safeSideGraph, otherSideGraph) = GetSideGraphs(_graph, safeSideType);
-        var allButtons = safeSideGraph.Buttons.Concat(otherSideGraph.Buttons);
+        SetupDoorMechanismsDelayedClose();
 
         _graph.Exit.Enable(safeSideType);
         await _graph.Exit.OpenAsync();
-        _doorMechanismA.ClearReceivedCalls();
-        _doorMechanismB.ClearReceivedCalls();
+
+        ClearDoorMechanismsReceivedCalls();
 
         // Act
-        var closeExitTask = _graph.Exit.CloseAsync();
-        await Task.Delay(50); // headstart for the closeExitTask
-
-        var pressTask = allButtons.Select(button => Task.Run(() => button.Press())).ToArray();
-        await Task.WhenAll(pressTask.Append(closeExitTask));
+        await PressButtonsWhileExitClosing(safeSideType);
         
         // Assert
         await _doorMechanismA.DidNotReceive().OpenAsync();
@@ -355,22 +347,17 @@ public class TrainExitIntegrationTests
     public async Task TrainExit_WhenDoorTimedOutAndButtonPressed_ReopensSafeSideDoor(TrainSideType safeSideType, int buttonIndex)
     {
         // Arrange
-        _doorMechanismA.CloseAsync(Arg.Any<CancellationToken>()).Returns(async _ => await Task.Delay(200));
-        _doorMechanismB.CloseAsync(Arg.Any<CancellationToken>()).Returns(async _ => await Task.Delay(200));
         var (safeSideDoorMechanism, otherSideDoorMechanism) = GetDoorMechanisms(safeSideType);
 
-        var (safeSideGraph, otherSideGraph) = GetSideGraphs(_graph, safeSideType);
-        var button = safeSideGraph.Buttons.ElementAt(buttonIndex);
+        SetupDoorMechanismsDelayedClose();
+
         _graph.Exit.Enable(safeSideType);
         await _graph.Exit.OpenAsync();
 
-        _doorMechanismA.ClearReceivedCalls();
-        _doorMechanismB.ClearReceivedCalls();
+        ClearDoorMechanismsReceivedCalls();
 
         // Act
-        safeSideGraph.Door.TimeOut();
-        await Task.Delay(50); // headstart for the Door.TimeOut()
-        button.Press();
+        await PressButtonsWhileDoorAutoClosing(safeSideType, buttonIndex);
 
         // Assert
         await safeSideDoorMechanism.Received(1).OpenAsync();
@@ -471,5 +458,38 @@ public class TrainExitIntegrationTests
         {
             Assert.Equal(ButtonState.Idle, button.State);   
         }
+    }
+
+    private void SetupDoorMechanismsDelayedClose()
+    {
+        _doorMechanismA.CloseAsync(Arg.Any<CancellationToken>()).Returns(async _ => await Task.Delay(200));
+        _doorMechanismB.CloseAsync(Arg.Any<CancellationToken>()).Returns(async _ => await Task.Delay(200));
+    }
+
+    private void ClearDoorMechanismsReceivedCalls()
+    {
+        _doorMechanismA.ClearReceivedCalls();
+        _doorMechanismB.ClearReceivedCalls();
+    }
+
+    private async Task PressButtonsWhileExitClosing(TrainSideType safeSideType)
+    {
+        var (safeSideGraph, otherSideGraph) = GetSideGraphs(_graph, safeSideType);
+        var closeExitTask = _graph.Exit.CloseAsync();
+        await Task.Delay(50); // headstart for the closeExitTask
+
+        var allButtons = safeSideGraph.Buttons.Concat(otherSideGraph.Buttons);
+        var pressTask = allButtons.Select(button => Task.Run(() => button.Press())).ToArray();
+        await Task.WhenAll(pressTask.Append(closeExitTask));
+    }
+
+    private async Task PressButtonsWhileDoorAutoClosing(TrainSideType safeSideType, int buttonIndex)
+    {
+        var (safeSideGraph, otherSideGraph) = GetSideGraphs(_graph, safeSideType);
+        safeSideGraph.Door.TimeOut();
+        await Task.Delay(50); // headstart for the Door.TimeOut()
+
+        var button = safeSideGraph.Buttons.ElementAt(buttonIndex);
+        button.Press();
     }
 }
