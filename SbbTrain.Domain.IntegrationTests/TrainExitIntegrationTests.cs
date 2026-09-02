@@ -171,10 +171,10 @@ public class TrainExitIntegrationTests
 
     [Theory]
     [MemberData(nameof(SafeSideTypeAndButtonIndexCombinations))]
-    public async Task TrainExit_WhenDisabledThenButtonPressed_AllButtonsActive(TrainSideType safeSideType, int buttonIndex)
+    public async Task TrainExit_WhenDisabledThenButtonPressed_AllButtonsActive(TrainSideType sideType, int buttonIndex)
     {
         // Arrange
-        var (oneSideGraph, otherSideGraph) = GetSideGraphs(_graph, safeSideType);
+        var (oneSideGraph, otherSideGraph) = GetSideGraphs(_graph, sideType);
         var buttonToPress = oneSideGraph.Buttons.ElementAt(buttonIndex);
         var allButtons = oneSideGraph.Buttons.Concat(otherSideGraph.Buttons);
         var buttonsActive = WaitUntilButtonsActive(allButtons);
@@ -383,6 +383,23 @@ public class TrainExitIntegrationTests
         // Assert
         await safeSideDoorMechanism.Received(1).OpenAsync();
         await otherSideDoorMechanism.DidNotReceive().OpenAsync();
+    }
+
+    [Theory]
+    [InlineData(TrainSideType.A)]
+    [InlineData(TrainSideType.B)]
+    public async Task TrainExit_WhenEnabledAndDoorClosedAndObstructionDetected_DoorDoesntOpen(TrainSideType safeSideType)
+    {
+        // Arrange
+        var (safeSideGraph, otherSideGraph) = GetSideGraphs(_graph, safeSideType);
+        _graph.Exit.Enable(safeSideType);
+        await safeSideGraph.Door.CloseAsync();
+
+        // Act
+        safeSideGraph.Door.OnEventReceived(EventType.ObstructionDetected);
+
+        // Assert
+        Assert.Equal(DoorState.Closed, safeSideGraph.Door.State);
     }
 
     private Task WaitUntilButtonsIdle(IEnumerable<IExitButton> buttons)
