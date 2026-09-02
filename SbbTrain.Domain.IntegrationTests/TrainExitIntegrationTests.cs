@@ -52,6 +52,24 @@ public class TrainExitIntegrationTests
 
     [Theory]
     [MemberData(nameof(SafeSideTypeAndButtonIndexCombinations))]
+    public async Task TrainExit_WhenEnabledThenSameButtonPressedTwiceOnSafeSide_GapFillerExtendedAndDoorOpenedAndButtonsIdleOnSafeSide(
+        TrainSideType safeSideType, int buttonIndex)
+    {
+        // Arrange
+        var (safeSideGraph, otherSideGraph) = GetSideGraphs(_graph, safeSideType);
+        var buttonToPress = safeSideGraph.Buttons.ElementAt(buttonIndex);
+
+        _graph.Exit.Enable(safeSideType);
+
+        // Act
+        await PressButtonsAndWaitUntilIdle(new List<IExitButton> { buttonToPress, buttonToPress });
+
+        // Assert
+        AssertOnlySafeSideOpenedAndAllButtonsIdle(safeSideGraph, otherSideGraph);
+    }
+
+    [Theory]
+    [MemberData(nameof(SafeSideTypeAndButtonIndexCombinations))]
     public async Task TrainExit_WhenEnabledThenButtonPressedOnUnsafeSide_GapFillerExtendedAndDoorOpenedAndButtonsIdleOnSafeSide(
         TrainSideType safeSideType, int buttonIndex)
     {
