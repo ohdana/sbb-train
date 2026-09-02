@@ -41,9 +41,8 @@ public class TrainExitTestGraphBuilder
 
     public TrainExitTestGraphBuilder WithGapFillerMechanismA(IGapFillerMechanism mechanism){ _gapFillerMechanismA = mechanism; return this; }
     public TrainExitTestGraphBuilder WithGapFillerMechanismB(IGapFillerMechanism mechanism){ _gapFillerMechanismB = mechanism; return this; }
-
-    public TrainExitTestGraphBuilder WithNotifier(ITrainNotifier notifier) { _notifier = notifier; return this; }
     
+    public TrainExitTestGraphBuilder WithNotifier(ITrainNotifier notifier) { _notifier = notifier; return this; }  
     public TrainExitTestGraphBuilder WithLogger(ITrainLogger logger) { _logger = logger; return this; }
     
     private (ITrainExitSide Side, IExitDoor Door, IDoorIndicator DoorIndicator, ITrainGapFiller GapFiller, IReadOnlyList<IExitButton> Buttons) BuildSide(
