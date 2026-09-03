@@ -5,6 +5,7 @@ public class ExitDoor : IExitDoor
 
     public event Action? StateChanged;
     public event Action? TimedOut;
+    public event Action? ObstructionDetected;
 
     private readonly ITimeoutTimer _autoCloseTimer;
     private readonly IExitDoorMechanism _mechanism;
@@ -104,12 +105,17 @@ public class ExitDoor : IExitDoor
 
     private void HandleObstructionDetected()
     {
+        if (State == DoorState.Closed)
+        {
+            return;
+        }
+
         if (State == DoorState.Closing)
         {
             StopDoorMechanism();
         }
 
-        _autoCloseTimer.Reset();
+        RaiseObstructionDetected();
     }
 
     private void StopDoorMechanism()
@@ -150,4 +156,5 @@ public class ExitDoor : IExitDoor
 
     private void RaiseStateChanged() => StateChanged?.Invoke();
     private void RaiseTimedOut() => TimedOut?.Invoke();
+    private void RaiseObstructionDetected() => ObstructionDetected?.Invoke();
 }

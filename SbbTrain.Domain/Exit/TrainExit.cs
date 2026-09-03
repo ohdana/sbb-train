@@ -27,6 +27,9 @@ public class TrainExit : ITrainExit
 
         _sideA.ButtonNotificationRequested += OnButtonNotificationRequested;
         _sideB.ButtonNotificationRequested += OnButtonNotificationRequested;
+
+        _sideA.ObstructionDetected += OnObstructionDetected;
+        _sideB.ObstructionDetected += OnObstructionDetected;
     }
 
     public void Enable(TrainSideType sideType)
@@ -105,6 +108,11 @@ public class TrainExit : ITrainExit
     {
         _sideA.HandleButtonNotificationRequest(eventType);
         _sideB.HandleButtonNotificationRequest(eventType);
+    }
+
+    private void OnObstructionDetected()
+    {
+        // TODO
     }
 
     private void SetNoSafeSide() => _safeSide = null;

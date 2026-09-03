@@ -4,6 +4,7 @@ public interface ITrainExitSide : IExitEventHandler
 
     event Action? OpenRequested;
     event Action<EventType>? ButtonNotificationRequested;
+    event Action? ObstructionDetected;
     
     Task OpenAsync();
     Task CloseAsync();
