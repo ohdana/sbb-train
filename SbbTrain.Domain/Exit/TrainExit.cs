@@ -6,21 +6,26 @@ public class TrainExit : ITrainExit
     public event Action? StateChanged;
     public event Action? OpenRequested;
 
+    private readonly ITrainLogger _logger;
     private readonly ITrainExitNotifier _notifier;
     private readonly ITrainExitSide _sideA;
     private readonly ITrainExitSide _sideB;
     private ITrainExitSide? _safeSide;
 
     private bool _isForceClosing;
+    private int _autoCloseRetryCount;
+    private const int AUTO_CLOSE_RETRY_COUNT_THRESHOLD = 1;
 
-    public TrainExit(Guid id, ITrainExitSide sideA, ITrainExitSide sideB, ITrainExitNotifier notifier)
+    public TrainExit(Guid id, ITrainExitSide sideA, ITrainExitSide sideB, ITrainExitNotifier notifier, ITrainLogger logger)
     {
         Id = id;
         State = TrainExitState.Disabled;
         _sideA = sideA;
         _sideB = sideB;
         _notifier = notifier;
+        _logger = logger;
         _isForceClosing = false;
+        _autoCloseRetryCount = 0;
 
         _sideA.OpenRequested += OnOpenRequested;
         _sideB.OpenRequested += OnOpenRequested;
@@ -28,8 +33,8 @@ public class TrainExit : ITrainExit
         _sideA.ButtonNotificationRequested += OnButtonNotificationRequested;
         _sideB.ButtonNotificationRequested += OnButtonNotificationRequested;
 
-        _sideA.ObstructionDetected += OnObstructionDetected;
-        _sideB.ObstructionDetected += OnObstructionDetected;
+        _sideA.DoorReopened += OnDoorReopened;
+        _sideB.DoorReopened += OnDoorReopened;
     }
 
     public void Enable(TrainSideType sideType)
@@ -74,6 +79,7 @@ public class TrainExit : ITrainExit
         {
             OnButtonNotificationRequested(EventType.ExitForceClosing);
             await _safeSide.CloseAsync();
+            ResetAutoCloseRetryCount();
         }
         catch
         {
@@ -110,9 +116,32 @@ public class TrainExit : ITrainExit
         _sideB.HandleButtonNotificationRequest(eventType);
     }
 
-    private void OnObstructionDetected()
+    private void OnDoorReopened()
     {
-        // TODO
+        if (_autoCloseRetryCount >= AUTO_CLOSE_RETRY_COUNT_THRESHOLD)
+        {
+            _notifier.NotifyAutoCloseRetryCountQuotaExceeded(Id);
+            ResetAutoCloseRetryCount();
+            return;
+        }
+
+        _ = RetryCloseAsync();
+    }
+
+    private void IncrementAutoCloseRetryCount() => _autoCloseRetryCount++;
+    private void ResetAutoCloseRetryCount() => _autoCloseRetryCount = 0;
+
+    private async Task RetryCloseAsync()
+    {
+        IncrementAutoCloseRetryCount();
+        try
+        {
+            await CloseAsync();
+        }
+        catch (Exception exception)
+        {
+            _logger.LogError(Id, exception);
+        }
     }
 
     private void SetNoSafeSide() => _safeSide = null;

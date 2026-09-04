@@ -5,17 +5,19 @@ public class TrainExitTests
 {
     private readonly Guid _exitId;
     private readonly TrainExit _exit;
+    private readonly ITrainLogger _logger;
     private readonly ITrainExitNotifier _notifier;
     private readonly ITrainExitSide _sideA;
     private readonly ITrainExitSide _sideB;
 
     public TrainExitTests()
     {
+        _logger = Substitute.For<ITrainLogger>();
         _notifier = Substitute.For<ITrainExitNotifier>();
         _sideA = Substitute.For<ITrainExitSide>();
         _sideB = Substitute.For<ITrainExitSide>();
         _exitId = Guid.NewGuid();
-        _exit = new TrainExit(_exitId, _sideA, _sideB, _notifier);
+        _exit = new TrainExit(_exitId, _sideA, _sideB, _notifier, _logger);
     }
 
     [Fact]

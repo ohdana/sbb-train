@@ -4,7 +4,7 @@ public class TrainExitSide : ITrainExitSide
 
     public event Action? OpenRequested;
     public event Action<EventType>? ButtonNotificationRequested;
-    public event Action? ObstructionDetected;
+    public event Action? DoorReopened;
 
     private readonly IExitDoor _door;
     private readonly IDoorIndicator _doorIndicator;
@@ -28,7 +28,7 @@ public class TrainExitSide : ITrainExitSide
 
         _door.StateChanged += OnDoorStateChanged;
         _door.TimedOut += OnDoorTimedOut;
-        _door.ObstructionDetected += OnObstructionDetected;
+        _door.DoorReopened += OnDoorReopened;
         _gapFiller.TimedOut += OnGapFillerTimedOut;
 
         foreach (var button in _buttons)
@@ -92,7 +92,7 @@ public class TrainExitSide : ITrainExitSide
         _ = HandleDoorTimedOutAsync();
     }
 
-    private void OnObstructionDetected() => RaiseObstructionDetected();
+    private void OnDoorReopened() => RaiseDoorReopened();
 
     private void OnGapFillerTimedOut()
     {
@@ -141,5 +141,5 @@ public class TrainExitSide : ITrainExitSide
     }
 
     private void RaiseButtonNotificationRequested(EventType eventType) => ButtonNotificationRequested?.Invoke(eventType);
-    private void RaiseObstructionDetected() => ObstructionDetected?.Invoke();
+    private void RaiseDoorReopened() => DoorReopened?.Invoke();
 }

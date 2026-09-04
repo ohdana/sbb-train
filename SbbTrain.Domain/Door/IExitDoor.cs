@@ -6,5 +6,5 @@ public interface IExitDoor :
 {
     event Action? StateChanged;
     event Action? TimedOut;
-    event Action? ObstructionDetected;
+    event Action? DoorReopened;
 }

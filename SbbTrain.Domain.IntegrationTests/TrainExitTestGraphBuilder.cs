@@ -23,7 +23,7 @@ public class TrainExitTestGraphBuilder
         var sideA = BuildSide(TrainSideType.A, _doorMechanismA, _gapFillerMechanismA, _mockGapFillerA, timerFactory);
         var sideB = BuildSide(TrainSideType.B, _doorMechanismB, _gapFillerMechanismB, _mockGapFillerB, timerFactory);
 
-        var exit = new TrainExit(Guid.NewGuid(), sideA.Side, sideB.Side, _notifier);
+        var exit = new TrainExit(Guid.NewGuid(), sideA.Side, sideB.Side, _notifier, _logger);
         _ = new PendingOpenRequestResolver(exit, _logger);
 
         return new TrainExitTestGraph(
