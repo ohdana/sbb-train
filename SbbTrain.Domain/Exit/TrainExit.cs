@@ -81,6 +81,10 @@ public class TrainExit : ITrainExit
             await _safeSide.CloseAsync();
             ResetAutoCloseRetryCount();
         }
+        catch (DoorCloseInterruptedException exception)
+        {
+            _logger.LogError(Id, exception);
+        }
         catch
         {
             HandleTrainExitSideException();

@@ -64,7 +64,7 @@ public class ExitDoor : IExitDoor
         {
             await OpenAsync();
             RaiseDoorReopened();
-            return;
+            throw new DoorCloseInterruptedException(Id);
         }
         catch (Exception)
         {

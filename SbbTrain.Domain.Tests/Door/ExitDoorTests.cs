@@ -153,10 +153,10 @@ public class ExitDoorTests
         // Act
         var closeTask = _door.CloseAsync();
         _door.OnEventReceived(EventType.ObstructionDetected);
-
-        await closeTask;
+        var exception = await Record.ExceptionAsync(() => closeTask);
 
         // Assert
+        Assert.IsType<DoorCloseInterruptedException>(exception);
         Received.InOrder(() =>
         {
             _notifier.NotifyDoorStateChanged(_doorId, DoorState.Opening);

@@ -54,6 +54,21 @@ public class TrainExitSideTests
     }
 
     [Fact]
+    public async Task TrainExitSide_WhenCloseCalledAndDoorCloseUnsuccessful_DoesntRetractGapFiller()
+    {
+        // Arrange
+        _door.CloseAsync().Returns<Task>(_ => throw new DoorCloseInterruptedException(_door.Id));
+
+        // Act
+        var closeTask = _exitSide.CloseAsync();
+        var exception = await Record.ExceptionAsync(() => closeTask);
+
+        // Assert
+        Assert.IsType<DoorCloseInterruptedException>(exception);
+        await _gapFiller.DidNotReceive().RetractAsync();
+    }
+
+    [Fact]
     public async Task TrainExitSide_WhenDoorFaultsOnOpen_Rethrows()
     {
         // Arrange
