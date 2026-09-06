@@ -49,16 +49,8 @@ public class TrainExitSide : ITrainExitSide
     public async Task CloseAsync()
     {
         RaiseButtonNotificationRequested(EventType.DoorBusy);
-        try
-        {
-            await _door.CloseAsync();
-            await _gapFiller.RetractAsync();
-        }
-        catch (DoorCloseInterruptedException)
-        {
-            throw;
-        }
-        
+        await _door.CloseAsync();
+        await _gapFiller.RetractAsync();
         RaiseButtonNotificationRequested(EventType.DoorIdle);
     }
 
