@@ -150,6 +150,25 @@ public class TrainExitTests
     [Theory]
     [InlineData(TrainSideType.A)]
     [InlineData(TrainSideType.B)]
+    public async Task TrainExit_WhenCloseCalledAndObstructionDetected_RetriesClose(TrainSideType sideType)
+    {
+        // Arrange
+        var (safeSide, anotherSide) = GetSides(sideType);
+        safeSide.CloseAsync().Returns(Task.CompletedTask);
+        _exit.Enable(sideType);
+
+        // Act
+        var closeTask = _exit.CloseAsync();
+        safeSide.DoorReopened += Raise.Event<Action>();
+        await closeTask;
+
+        // Assert
+        await safeSide.Received(2).CloseAsync();
+    }
+
+    [Theory]
+    [InlineData(TrainSideType.A)]
+    [InlineData(TrainSideType.B)]
     public async Task TrainExit_WhenSideThrowsExceptionOnOpen_BecomesFaultedAndRethrows(
         TrainSideType sideType)
     {
