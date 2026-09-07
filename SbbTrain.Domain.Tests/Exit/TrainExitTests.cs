@@ -154,13 +154,12 @@ public class TrainExitTests
     {
         // Arrange
         var (safeSide, anotherSide) = GetSides(sideType);
-        safeSide.CloseAsync().Returns(Task.CompletedTask);
+        safeSide.CloseAsync()
+            .Returns(Task.FromException(new DoorCloseInterruptedException(Guid.NewGuid())));
         _exit.Enable(sideType);
 
         // Act
-        var closeTask = _exit.CloseAsync();
-        safeSide.DoorReopened += Raise.Event<Action>();
-        await closeTask;
+        await _exit.CloseAsync();
 
         // Assert
         await safeSide.Received(2).CloseAsync();

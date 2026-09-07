@@ -4,7 +4,6 @@ public interface ITrainExitSide : IExitEventHandler
 
     event Action? OpenRequested;
     event Action<EventType>? ButtonNotificationRequested;
-    event Action? DoorReopened;
     
     Task OpenAsync();
     Task CloseAsync();

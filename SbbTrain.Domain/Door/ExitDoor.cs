@@ -5,7 +5,6 @@ public class ExitDoor : IExitDoor
 
     public event Action? StateChanged;
     public event Action? TimedOut;
-    public event Action? DoorReopened;
 
     private readonly ITimeoutTimer _autoCloseTimer;
     private readonly IExitDoorMechanism _mechanism;
@@ -63,7 +62,6 @@ public class ExitDoor : IExitDoor
         catch (OperationCanceledException)
         {
             await OpenAsync();
-            RaiseDoorReopened();
             throw new DoorCloseInterruptedException(Id);
         }
         catch (Exception)
@@ -155,5 +153,4 @@ public class ExitDoor : IExitDoor
 
     private void RaiseStateChanged() => StateChanged?.Invoke();
     private void RaiseTimedOut() => TimedOut?.Invoke();
-    private void RaiseDoorReopened() => DoorReopened?.Invoke();
 }

@@ -28,7 +28,6 @@ public class TrainExitSide : ITrainExitSide
 
         _door.StateChanged += OnDoorStateChanged;
         _door.TimedOut += OnDoorTimedOut;
-        _door.DoorReopened += OnDoorReopened;
         _gapFiller.TimedOut += OnGapFillerTimedOut;
 
         foreach (var button in _buttons)
