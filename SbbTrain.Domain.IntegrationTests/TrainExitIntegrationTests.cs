@@ -405,7 +405,7 @@ public class TrainExitIntegrationTests
     [Theory]
     [InlineData(TrainSideType.A)]
     [InlineData(TrainSideType.B)]
-    public async Task TrainExit_WhenClosingAndObstructionDetected_DoorReopens(TrainSideType safeSideType)
+    public async Task TrainExit_WhenForceClosingAndObstructionDetected_DoorReopensThenRetriesClose(TrainSideType safeSideType)
     {
         // Arrange
         SetupDoorMechanismsDelayedClose();
@@ -413,15 +413,45 @@ public class TrainExitIntegrationTests
         var (safeSideDoorMechanism, otherSideDoorMechanism) = GetDoorMechanisms(safeSideType);
         _graph.Exit.Enable(safeSideType);
         await _graph.Exit.OpenAsync();
-        ClearDoorMechanismsReceivedCalls();
 
         // Act
         var closeExitTask = _graph.Exit.CloseAsync();
+        ClearDoorMechanismsReceivedCalls();
         safeSideGraph.Door.OnEventReceived(EventType.ObstructionDetected);
         await closeExitTask;
 
         // Assert
         await safeSideDoorMechanism.Received(1).OpenAsync();
+        await safeSideDoorMechanism.Received(1).CloseAsync(Arg.Any<CancellationToken>());
+    }
+
+    [Theory]
+    [InlineData(TrainSideType.A)]
+    [InlineData(TrainSideType.B)]
+    public async Task TrainExit_WhenForceClosingAndCloseRetriesQuotaExceeded_Notifies(TrainSideType safeSideType)
+    {
+        // Arrange
+        const int autoCloseRetriesQuota = 1;
+        SetupDoorMechanismsDelayedClose();
+        var (safeSideGraph, otherSideGraph) = GetSideGraphs(_graph, safeSideType);
+        var (safeSideDoorMechanism, otherSideDoorMechanism) = GetDoorMechanisms(safeSideType);
+        _graph.Exit.Enable(safeSideType);
+        await _graph.Exit.OpenAsync();
+
+        // Act
+        var closeExitTask = _graph.Exit.CloseAsync();
+        ClearDoorMechanismsReceivedCalls();
+        for (int i = 0; i < autoCloseRetriesQuota + 1; i++)
+        {
+            safeSideGraph.Door.OnEventReceived(EventType.ObstructionDetected);
+            await Task.Delay(50);
+        }
+        await closeExitTask;
+
+        // Assert
+        Assert.Equal(DoorState.Opened, safeSideGraph.Door.State);
+        await safeSideDoorMechanism.Received(autoCloseRetriesQuota).CloseAsync(Arg.Any<CancellationToken>());
+        _notifier.Received(1).NotifyAutoCloseRetryCountQuotaExceeded(_graph.Exit.Id);
     }
 
     private Task WaitUntilButtonsIdle(IEnumerable<IExitButton> buttons)
