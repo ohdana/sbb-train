@@ -402,6 +402,28 @@ public class TrainExitIntegrationTests
         Assert.Equal(DoorState.Closed, safeSideGraph.Door.State);
     }
 
+    [Theory]
+    [InlineData(TrainSideType.A)]
+    [InlineData(TrainSideType.B)]
+    public async Task TrainExit_WhenClosingAndObstructionDetected_DoorReopens(TrainSideType safeSideType)
+    {
+        // Arrange
+        SetupDoorMechanismsDelayedClose();
+        var (safeSideGraph, otherSideGraph) = GetSideGraphs(_graph, safeSideType);
+        var (safeSideDoorMechanism, otherSideDoorMechanism) = GetDoorMechanisms(safeSideType);
+        _graph.Exit.Enable(safeSideType);
+        await _graph.Exit.OpenAsync();
+        ClearDoorMechanismsReceivedCalls();
+
+        // Act
+        var closeExitTask = _graph.Exit.CloseAsync();
+        safeSideGraph.Door.OnEventReceived(EventType.ObstructionDetected);
+        await closeExitTask;
+
+        // Assert
+        await safeSideDoorMechanism.Received(1).OpenAsync();
+    }
+
     private Task WaitUntilButtonsIdle(IEnumerable<IExitButton> buttons)
         => WaitUntilButtonsInState(buttons, ButtonState.Idle);
 
@@ -495,8 +517,10 @@ public class TrainExitIntegrationTests
 
     private void SetupDoorMechanismsDelayedClose()
     {
-        _doorMechanismA.CloseAsync(Arg.Any<CancellationToken>()).Returns(async _ => await Task.Delay(200));
-        _doorMechanismB.CloseAsync(Arg.Any<CancellationToken>()).Returns(async _ => await Task.Delay(200));
+        _doorMechanismA.CloseAsync(Arg.Any<CancellationToken>())
+            .Returns(callInfo => Task.Delay(200, callInfo.Arg<CancellationToken>()));
+        _doorMechanismB.CloseAsync(Arg.Any<CancellationToken>())
+            .Returns(callInfo => Task.Delay(200, callInfo.Arg<CancellationToken>()));
     }
 
     private void ClearDoorMechanismsReceivedCalls()
